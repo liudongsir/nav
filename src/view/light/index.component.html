@@ -78,9 +78,9 @@
                 <div
                   class="gutter-row"
                   nz-col
-                  [nzSpan]="8"
+                  [nzSpan]="6"
                   [nzSm]="12"
-                  [nzMd]="8"
+                  [nzMd]="6"
                   [nzXs]="24"
                   *ngFor="
                     let el of item.nav;
@@ -107,16 +107,16 @@
       </section>
     </main>
 
-    <div class="right dark-scrollbar" *ngIf="settings.lightImages.length > 0">
-      <div class="aditem" *ngFor="let item of settings.lightImages; index as i">
-        <a
-          [href]="item['url'] || 'javascript:void(0)'"
-          [target]="item['url'] ? '_blank' : '_self'"
-        >
-          <img class="adsimg" [src]="item['src']" />
-        </a>
-      </div>
-    </div>
+<!--    <div class="right dark-scrollbar" *ngIf="settings.lightImages.length > 0">-->
+<!--      <div class="aditem" *ngFor="let item of settings.lightImages; index as i">-->
+<!--        <a-->
+<!--          [href]="item['url'] || 'javascript:void(0)'"-->
+<!--          [target]="item['url'] ? '_blank' : '_self'"-->
+<!--        >-->
+<!--          <img class="adsimg" [src]="item['src']" />-->
+<!--        </a>-->
+<!--      </div>-->
+<!--    </div>-->
   </div>
 
   <app-footer></app-footer>

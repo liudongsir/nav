@@ -7,6 +7,9 @@
   bottom: 0;
 }
 
+
+
+
 @media (max-width: 1280px) {
   .index-wrapper {
     --width: 800px;
@@ -32,11 +35,24 @@
   }
 }
 
+@media (1500px <= width <= 2000px) {
+  .index-wrapper{
+    --width: 100%;
+  }
+  .light-box {
+    width: 66% !important;
+  }
+}
+
 @media (max-width: 810px) {
   .index-wrapper {
     --top: 0;
   }
 }
+
+
+
+
 
 .index-wrapper {
   display: flex;
@@ -73,7 +89,7 @@
   width: var(--width, 1000px);
   height: 100%;
   position: relative;
-  background: rgb(251, 251, 251);
+  background: rgb(251, 251, 251, 0.65);
   border-radius: 5px;
   overflow: hidden;
   transition: 0.1s linear;
