@@ -1,12 +1,18 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// Copyright @ 2018-present xiejia.he. All rights reserved. MIT license.
 // See https://github.com/xjh22222228/nav
 
 import fs from 'fs'
 import config from '../nav.config.js'
 import path from 'path'
 import LOAD_MAP from './loading.js'
-import axios from 'axios'
 import dayjs from 'dayjs'
+import getWebInfo from 'info-web'
+import utc from 'dayjs/plugin/utc.js'
+import timezone from 'dayjs/plugin/timezone.js'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
+dayjs.tz.setDefault('Asia/Shanghai')
 
 const dbPath = path.join('.', 'data', 'db.json')
 const setPath = path.join('.', 'data', 'settings.json')
@@ -16,12 +22,12 @@ const db = JSON.parse(fs.readFileSync(dbPath).toString())
 const pkg = JSON.parse(fs.readFileSync(pkgPath).toString())
 const settings = JSON.parse(fs.readFileSync(setPath).toString())
 
-const nowDate = dayjs().format('YYYY-MM-DD HH:mm:ss')
+const nowDate = dayjs.tz().format('YYYY-MM-DD HH:mm:ss')
 
 const { description, title, keywords, loading, favicon, headerContent } =
   settings
 
-const { gitRepoUrl, homeUrl } = config.default
+const { gitRepoUrl } = config.default
 
 const s = gitRepoUrl.split('/')
 
@@ -32,7 +38,7 @@ const htmlTemplate = `
   <!-- https://github.com/xjh22222228/nav -->
   <title>${title}</title>
   <meta name="description" content="${description}">
-  <meta name="keywords" content="${keywords}">
+  <meta name="keywords" content="${keywords}" id="xjh_2">
   <link rel="icon" href="${favicon}">
   <link rel ="apple-touch-icon" href="${favicon}">
 `.trim()
@@ -40,7 +46,9 @@ const htmlTemplate = `
 let scriptTemplate = ``.trim()
 
 let seoTemplate = `
-<div data-url="https://github.com/xjh22222228/nav" data-date="${nowDate}" data-version="${pkg.version}" id="META-NAV" style="z-index:-1;position:fixed;top:-10000vh;left:-10000vh;">
+<div data-url="https://github.com/xjh22222228/nav" data-server-time="${Date.now()}" data-a="x.i.e-jiahe" data-date="${nowDate}" data-version="${
+  pkg.version
+}" id="META-NAV" style="z-index:-1;position:fixed;top:-10000vh;left:-10000vh;">
 `
 
 async function buildSeo() {
@@ -51,16 +59,14 @@ async function buildSeo() {
       }
 
       seoTemplate += `<h3>${value.title || value.name || title}</h3>${
-        value.icon ? `<img data-src="${value.icon}" alt="${homeUrl}" />` : ''
+        value.icon ? `<img data-src="${value.icon}" alt="${value.icon}" />` : ''
       }<p>${value.desc || description}</p><a href="${
-        value.url || homeUrl || gitRepoUrl
+        value.url || gitRepoUrl
       }"></a>`
 
       if (value.urls && typeof value.urls === 'object') {
         for (let k in value.urls) {
-          seoTemplate += `<a href="${
-            value.urls[k] || homeUrl || gitRepoUrl
-          }"></a>`
+          seoTemplate += `<a href="${value.urls[k] || gitRepoUrl}"></a>`
         }
       }
     }
@@ -79,6 +85,7 @@ async function build() {
   let t = fs.readFileSync(htmlPath).toString()
   t = t.replace(/<title>.*<\/title>/i, '')
   t = t.replace('<link rel="icon" href="assets/logo.png" />', '')
+  t = t.replace('<link rel="icon" href="assets/logo.png">', '')
   t = t.replace('<!-- nav.config -->', htmlTemplate)
   if (headerContent) {
     t = t.replace('<!-- nav.headerContent -->', headerContent)
@@ -87,11 +94,15 @@ async function build() {
   t = t.replace('<!-- nav.script -->', scriptTemplate)
 
   t = t.replace('<!-- nav.seo -->', seoTemplate)
-  t = t.replace('<!-- nav.loading -->', LOAD_MAP[getLoadKey()] || '')
+
+  const loadingCode = settings.loadingCode.trim()
+  t = t.replace(
+    '<!-- nav.loading -->',
+    loadingCode || LOAD_MAP[getLoadKey()] || ''
+  )
 
   fs.writeFileSync(writePath, t, { encoding: 'utf-8' })
   fs.unlinkSync('./nav.config.js')
-  console.log('Config build done!')
 }
 
 buildSeo()
@@ -109,21 +120,7 @@ function getLoadKey() {
 
 let errorUrlCount = 0
 ;(async function () {
-  async function getUrl(url) {
-    return axios
-      .get(url, {
-        timeout: 10000,
-      })
-      .then(() => {
-        // console.log(`正常 ${url}`)
-        return true
-      })
-      .catch(() => {
-        errorUrlCount += 1
-        console.log(`异常 ${url}`)
-        return false
-      })
-  }
+  const items = []
 
   async function r(nav) {
     if (!Array.isArray(nav)) return
@@ -132,11 +129,16 @@ let errorUrlCount = 0
       const item = nav[i]
       if (item.url) {
         delete item.ok
-        if (settings.checkUrl) {
-          const res = await getUrl(item.url)
-          if (!res) {
-            item.ok = false
-          }
+        if (
+          settings.checkUrl ||
+          settings.spiderIcon === 'EMPTY' ||
+          settings.spiderIcon === 'ALWAYS' ||
+          settings.spiderDescription === 'EMPTY' ||
+          settings.spiderDescription === 'ALWAYS' ||
+          settings.spiderTitle === 'EMPTY' ||
+          settings.spiderTitle === 'ALWAYS'
+        ) {
+          items.push(item)
         }
       } else {
         r(item.nav)
@@ -145,10 +147,96 @@ let errorUrlCount = 0
   }
 
   r(db)
+
+  console.log('Getting...')
+  const max = settings.spiderQty ?? 20
+  const count = Math.ceil(items.length / max)
+  let current = 0
+  const now = Date.now()
+
+  while (current < count) {
+    const request = []
+    for (let i = current * max; i < current * max + max; i++) {
+      const item = items[i]
+      if (item) {
+        request.push(getWebInfo(item.url, { timeout: 3000 }))
+      }
+    }
+
+    const promises = await Promise.allSettled(request)
+
+    for (let i = 0; i < promises.length; i++) {
+      const idx = current * max + i
+      const item = items[idx]
+      const res = promises[i].value
+      console.log(`${idx}：${res.status ? '正常' : '疑似异常'} ${item.url}`)
+      if (settings.checkUrl) {
+        if (!res.status) {
+          errorUrlCount += 1
+          item.ok = false
+        }
+      }
+      if (res.status) {
+        if (settings.spiderIcon === 'ALWAYS' && res.iconUrl) {
+          item.icon = res.iconUrl
+          console.log(
+            `更新图标：${item.url}: "${item.icon}" => "${res.iconUrl}"`
+          )
+        } else if (
+          settings.spiderIcon === 'EMPTY' &&
+          !item.icon &&
+          res.iconUrl
+        ) {
+          item.icon = res.iconUrl
+          console.log(
+            `更新图标：${item.url}: "${item.icon}" => "${res.iconUrl}"`
+          )
+        }
+
+        if (settings.spiderTitle === 'ALWAYS' && res.title) {
+          console.log(
+            `更新标题：${item.url}: "${item.title}" => "${res.title}"`
+          )
+          item.name = res.title
+        } else if (
+          settings.spiderTitle === 'EMPTY' &&
+          !item.name &&
+          res.title
+        ) {
+          console.log(
+            `更新标题：${item.url}: "${item.title}" => "${res.title}"`
+          )
+          item.name = res.title
+        }
+
+        if (settings.spiderDescription === 'ALWAYS' && res.description) {
+          console.log(
+            `更新描述：${item.url}: "${item.desc}" => "${res.description}"`
+          )
+          item.desc = res.description
+        } else if (
+          settings.spiderDescription === 'EMPTY' &&
+          !item.desc &&
+          res.description
+        ) {
+          console.log(
+            `更新描述：${item.url}: "${item.desc}" => "${res.description}"`
+          )
+          item.desc = res.description
+        }
+      }
+      console.log('-'.repeat(100))
+    }
+    current += 1
+  }
+
+  const diff = Math.ceil((Date.now() - now) / 1000)
+  console.log(`Time: ${diff} seconds`)
 })()
 
 process.on('exit', () => {
   settings.errorUrlCount = errorUrlCount
   fs.writeFileSync(setPath, JSON.stringify(settings), { encoding: 'utf-8' })
   fs.writeFileSync(dbPath, JSON.stringify(db), { encoding: 'utf-8' })
+  console.log('All success!')
 })

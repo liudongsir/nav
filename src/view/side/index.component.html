@@ -15,7 +15,7 @@
       >
         <ng-template #titleTpl>
           <img *ngIf="item.icon" class="sideicon" [src]="item.icon" />
-          <span>{{ item.title }}</span>
+          <span class="menu-title ellipsis">{{ item.title }}</span>
         </ng-template>
 
         <ul>
@@ -50,12 +50,11 @@
           [images]="settings.sideThemeImages"
           [autoplay]="settings.sideThemeAutoplay"
           [height]="settings.sideThemeHeight"
-        >
-          <app-search-engine class="max768none"></app-search-engine>
-        </app-swiper>
+        />
+        <app-search-engine class="max768none" />
       </div>
 
-      <app-search-engine class="hidden search-sm" />
+      <app-search-engine class="hidden search-sm mobile-search" />
 
       <nz-content class="content" id="content">
         <app-web-list [search]="false"></app-web-list>
@@ -103,6 +102,8 @@
                       [cardStyle]="settings.sideCardStyle"
                       [dataSource]="el"
                       [indexs]="[page, id, i, j]"
+                      [searchKeyword]="searchKeyword"
+                      class="column-border"
                     ></app-card>
                   </div>
                 </div>

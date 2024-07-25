@@ -1,3 +1,6 @@
+// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// See https://github.com/xjh22222228/nav
+
 import { NgModule } from '@angular/core'
 import { RouterModule, Routes } from '@angular/router'
 import config from '../../nav.config'
@@ -16,6 +19,7 @@ import SystemWebComponent from '../view/system/web/index.component'
 import SystemAngleMarkComponent from '../view/system/angle-mark/index.component'
 import SideComponent from '../view/side/index.component'
 import ShortcutComponent from '../view/shortcut/index.component'
+import CollectComponent from '../view/system/collect/index.component'
 import WebpComponent from '../view/app/default/app.component'
 
 const routes: Routes = [
@@ -35,6 +39,7 @@ const routes: Routes = [
     path: 'shortcut',
     component: ShortcutComponent,
   },
+
   {
     path: 'light',
     component: LightComponent,
@@ -57,6 +62,10 @@ const routes: Routes = [
       {
         path: 'bookmark',
         component: SystemBookmarkComponent,
+      },
+      {
+        path: 'collect',
+        component: CollectComponent,
       },
       {
         path: 'about',

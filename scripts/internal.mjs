@@ -1,4 +1,4 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// Copyright @ 2018-present x.iejiahe. All rights reserved. MIT license.
 // See https://github.com/xjh22222228/nav
 
 import fs from 'fs'
@@ -85,6 +85,8 @@ const TAG_ID_NAME3 = 'Github'
   settings.homeUrl ??= 'https://nav3.cn'
   settings.language ??= 'zh-CN'
   settings.loading ??= 'random'
+  settings.allowCollect ??= false
+  settings.email ??= ''
   settings.showGithub ??= true
   settings.showLanguage ??= true
   settings.showRate ??= true
@@ -98,7 +100,7 @@ const TAG_ID_NAME3 = 'Github'
   settings.openSEO ??= true
   settings.headerContent ??= ''
   settings.footerContent ??=
-    '<div style="font-weight: bold;">共收录${total}个网站</div><div>Copyright © 2018-present nav3.cn, All Rights Reserved</div>'
+    '<div>共收录${total}个网站</div><div>Copyright © 2018-${year} ${hostname}, All Rights Reserved</div>'
   settings.baiduStatisticsUrl ??=
     'https://hm.baidu.com/hm.js?4582be7af7e7c95ef75351e07c6c32ba'
   settings.cnzzStatisticsUrl ??= ''
@@ -181,6 +183,11 @@ const TAG_ID_NAME3 = 'Github'
     },
   ]
   settings.mirrorList ||= []
+  settings.spiderIcon ??= 'NO'
+  settings.spiderDescription ??= 'NO'
+  settings.spiderTitle ??= 'NO'
+  settings.spiderQty ??= 20
+  settings.loadingCode ??= ''
   fs.writeFileSync(settingsPath, JSON.stringify(settings), {
     encoding: 'utf-8',
   })
@@ -271,6 +278,18 @@ function setWeb(nav) {
             const navItemItem = navItem.nav[k]
             removeIconFont(navItemItem)
             formatDate(navItemItem)
+
+            navItemItem.nav.sort((a, b) => {
+              const aIdx =
+                a.index == null || a.index === ''
+                  ? Number.MAX_SAFE_INTEGER
+                  : a.index
+              const bIdx =
+                b.index == null || b.index === ''
+                  ? Number.MAX_SAFE_INTEGER
+                  : b.index
+              return aIdx - bIdx
+            })
             if (navItemItem.nav) {
               for (let l = 0; l < navItemItem.nav.length; l++) {
                 let breadcrumb = []

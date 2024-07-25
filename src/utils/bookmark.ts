@@ -1,4 +1,4 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// Copyright @ 2018-present xie.jiahe. All rights reserved. MIT license.
 // See https://github.com/xjh22222228/nav
 
 import { INavProps } from '../types'
@@ -8,7 +8,7 @@ import { $t } from '../locale'
 let id = -Date.now()
 
 function getCreatedAt(node?: Element): string {
-  const now = new Date().toISOString()
+  const now = new Date().toString()
   if (!node) {
     return now
   }
@@ -19,7 +19,7 @@ function getCreatedAt(node?: Element): string {
     return now
   }
 
-  return new Date(Number(addDate) * 1000).toISOString()
+  return new Date(Number(addDate) * 1000).toString()
 }
 
 function getTitle(node: Element) {

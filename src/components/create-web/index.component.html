@@ -4,7 +4,7 @@
   [nzTitle]="detail ? $t('_edit') : $t('_add')"
   (nzOnCancel)="onClose()"
   (nzOnOk)="handleOk()"
-  [nzOkLoading]="uploading"
+  [nzOkLoading]="uploading || getting"
   [nzBodyStyle]="{ maxHeight: '70vh', overflowY: 'auto' }"
 >
   <ng-container *nzModalContent>
@@ -20,19 +20,6 @@
     <form nz-form [formGroup]="validateForm">
       <nz-form-item>
         <nz-form-label [nzSpan]="4" nzRequired>{{
-          $t('_webName')
-        }}</nz-form-label>
-        <nz-form-control [nzSpan]="20" [nzErrorTip]="$t('_requiredName')">
-          <input
-            formControlName="title"
-            nz-input
-            [placeholder]="$t('_webTitle')"
-          />
-        </nz-form-control>
-      </nz-form-item>
-
-      <nz-form-item>
-        <nz-form-label [nzSpan]="4" nzRequired>{{
           $t('_webLink')
         }}</nz-form-label>
         <nz-form-control [nzSpan]="20" [nzErrorTip]="$t('_requiredLink')">
@@ -46,13 +33,40 @@
       </nz-form-item>
 
       <nz-form-item>
+        <nz-form-label [nzSpan]="4" nzRequired>{{
+          $t('_webName')
+        }}</nz-form-label>
+        <nz-form-control [nzSpan]="20" [nzErrorTip]="$t('_requiredName')">
+          <input
+            formControlName="title"
+            nz-input
+            [placeholder]="$t('_webTitle')"
+            [readonly]="getting"
+            [placeholder]="getting ? $t('_pendingGet') : ''"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="isLogin">
+        <nz-form-label [nzSpan]="4">{{ $t('_sort') }}</nz-form-label>
+        <nz-form-control [nzSpan]="20">
+          <input
+            formControlName="index"
+            nz-input
+            type="number"
+            placeholder="-1024"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item *ngIf="isLogin">
         <nz-form-label [nzSpan]="4">{{ $t('_shortcut') }}</nz-form-label>
         <nz-form-control [nzSpan]="20">
           <nz-switch formControlName="top"></nz-switch>
         </nz-form-control>
       </nz-form-item>
 
-      <nz-form-item>
+      <nz-form-item *ngIf="isLogin">
         <nz-form-label [nzSpan]="4">{{ $t('_onlyOwnVisible') }}</nz-form-label>
         <nz-form-control [nzSpan]="20">
           <nz-switch formControlName="ownVisible"></nz-switch>
@@ -66,7 +80,7 @@
         </nz-form-control>
       </nz-form-item>
 
-      <nz-form-item>
+      <nz-form-item *ngIf="isLogin">
         <nz-form-label [nzSpan]="4">{{ $t('_iconAddr') }}</nz-form-label>
         <nz-form-control [nzSpan]="20">
           <nz-input-group [nzPrefix]="prefixIcon" [nzSuffix]="suffixIconSearch">
@@ -74,8 +88,8 @@
               formControlName="icon"
               nz-input
               [placeholder]="$t('_copyUpload')"
-              (blur)="onIconBlur($event)"
-              (focus)="onIconFocus()"
+              [readonly]="getting"
+              [placeholder]="getting ? $t('_pendingGet') : ''"
             />
           </nz-input-group>
 
@@ -111,6 +125,24 @@
         </nz-form-control>
       </nz-form-item>
 
+      <nz-form-item *ngIf="!isLogin">
+        <nz-form-label [nzSpan]="4">{{ $t('_iconAddr') }}</nz-form-label>
+        <nz-form-control [nzSpan]="20">
+          <nz-input-group [nzPrefix]="prefixIcon">
+            <input
+              formControlName="icon"
+              nz-input
+              [readonly]="getting"
+              [placeholder]="getting ? $t('_pendingGet') : ''"
+            />
+          </nz-input-group>
+
+          <ng-template #prefixIcon>
+            <app-logo [src]="iconUrl" [size]="25" *ngIf="iconUrl"></app-logo>
+          </ng-template>
+        </nz-form-control>
+      </nz-form-item>
+
       <nz-form-item>
         <nz-form-label [nzSpan]="4">{{ $t('_webDesc') }}</nz-form-label>
         <nz-form-control [nzSpan]="20">
@@ -119,6 +151,9 @@
             [placeholder]="settings.description"
             nz-input
             [nzAutosize]="{ minRows: 3, maxRows: 5 }"
+            [readonly]="getting"
+            [placeholder]="getting ? $t('_pendingGet') : ''"
+            class="dark-scrollbar"
           >
           </textarea>
         </nz-form-control>

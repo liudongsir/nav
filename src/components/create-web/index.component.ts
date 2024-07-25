@@ -3,7 +3,7 @@
 
 import { Component, Output, EventEmitter } from '@angular/core'
 import {
-  getLogoUrl,
+  getWebInfo,
   getTextContent,
   updateByWeb,
   queryString,
@@ -12,11 +12,11 @@ import {
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms'
 import { IWebProps } from 'src/types'
 import { NzMessageService } from 'ng-zorro-antd/message'
-import { NzNotificationService } from 'ng-zorro-antd/notification'
-import { createFile } from 'src/services'
+import { createFile, saveUserCollect } from 'src/services'
 import { $t } from 'src/locale'
 import { settings, websiteList, tagList, tagMap } from 'src/store'
 import event from 'src/utils/mitt'
+import { isLogin } from 'src/utils/user'
 
 @Component({
   selector: 'app-create-web',
@@ -27,24 +27,29 @@ export class CreateWebComponent {
   @Output() onOk = new EventEmitter()
 
   $t = $t
+  isLogin: boolean = isLogin
   validateForm!: FormGroup
   iconUrl = ''
   tagList = tagList
   uploading = false
+  getting = false
   settings = settings
   showModal = false
   detail: any = null
   oneIndex: number | undefined
   twoIndex: number | undefined
   threeIndex: number | undefined
+  callback: Function = () => {}
 
-  constructor(
-    private fb: FormBuilder,
-    private message: NzMessageService,
-    private notification: NzNotificationService
-  ) {
+  constructor(private fb: FormBuilder, private message: NzMessageService) {
     event.on('CREATE_WEB', (props: any) => {
       this.open(this, props)
+    })
+    event.on('SET_CREATE_WEB', (props: any) => {
+      for (const k in props) {
+        // @ts-ignore
+        this[k] = props[k]
+      }
     })
     this.validateForm = this.fb.group({
       title: ['', [Validators.required]],
@@ -54,6 +59,7 @@ export class CreateWebComponent {
       rate: [5],
       icon: [''],
       desc: [''],
+      index: [''],
       urlArr: this.fb.array([]),
     })
   }
@@ -81,6 +87,7 @@ export class CreateWebComponent {
     ctx.threeIndex = props.threeIndex
     this.validateForm.get('title')!.setValue(getTextContent(detail?.name))
     this.validateForm.get('desc')!.setValue(getTextContent(detail?.desc))
+    this.validateForm.get('index')!.setValue(detail?.index ?? '')
     this.validateForm.get('icon')!.setValue(detail?.icon || '')
     this.validateForm.get('url')!.setValue(detail?.url || '')
     this.validateForm.get('top')!.setValue(detail?.top ?? false)
@@ -112,23 +119,31 @@ export class CreateWebComponent {
     this.oneIndex = undefined
     this.twoIndex = undefined
     this.threeIndex = undefined
+    this.uploading = false
+    this.callback = Function
   }
 
   async onUrlBlur(e: any) {
-    const res = await getLogoUrl(e.target?.value)
-    if (res) {
-      this.iconUrl = res as string
+    const url = e.target?.value
+    if (!url) {
+      return
+    }
+    this.getting = true
+    const res = await getWebInfo(url)
+    if (res['url'] != null) {
+      this.iconUrl = res['url']
       this.validateForm.get('icon')!.setValue(this.iconUrl)
     }
-  }
-
-  onIconFocus() {
-    document.addEventListener('paste', this.handlePasteImage)
-  }
-
-  onIconBlur(e: any) {
-    document.removeEventListener('paste', this.handlePasteImage)
-    this.iconUrl = e.target.value
+    if (res['title'] != null) {
+      this.validateForm.get('title')!.setValue(res['title'])
+    }
+    if (res['description'] != null) {
+      this.validateForm.get('desc')!.setValue(res['description'])
+    }
+    if (res['status'] === false) {
+      this.message.error('自动抓取失败，请手动写入')
+    }
+    this.getting = false
   }
 
   addMoreUrl() {
@@ -145,24 +160,6 @@ export class CreateWebComponent {
   lessMoreUrl(idx: number) {
     // @ts-ignore
     this.validateForm.get('urlArr').removeAt(idx)
-  }
-
-  handlePasteImage = (event: any) => {
-    const items = event.clipboardData.items
-    let file = null
-
-    if (items.length) {
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith('image')) {
-          file = items[i].getAsFile()
-          break
-        }
-      }
-    }
-
-    if (file) {
-      this.handleUploadImage(file)
-    }
   }
 
   handleUploadImage(file: File) {
@@ -186,12 +183,6 @@ export class CreateWebComponent {
           that.validateForm.get('icon')!.setValue(path)
           that.message.success($t('_uploadSuccess'))
         })
-        .catch((res) => {
-          that.notification.error(
-            `${$t('_error')}: ${res?.response?.status ?? 401}`,
-            `${$t('_uploadFail')}：${res.message || ''}`
-          )
-        })
         .finally(() => {
           that.uploading = false
         })
@@ -209,15 +200,15 @@ export class CreateWebComponent {
     this.handleUploadImage(file)
   }
 
-  handleOk() {
+  async handleOk() {
     for (const i in this.validateForm.controls) {
       this.validateForm.controls[i].markAsDirty()
       this.validateForm.controls[i].updateValueAndValidity()
     }
 
-    const createdAt = new Date().toISOString()
+    const createdAt = new Date().toString()
     let urls: Record<string, any> = {}
-    let { title, icon, url, top, ownVisible, rate, desc } =
+    let { title, icon, url, top, ownVisible, rate, desc, index } =
       this.validateForm.value
 
     if (!title || !url) return
@@ -237,6 +228,7 @@ export class CreateWebComponent {
       rate: rate ?? 5,
       desc: desc || '',
       top: top ?? false,
+      index,
       ownVisible: ownVisible ?? false,
       icon,
       url,
@@ -268,13 +260,36 @@ export class CreateWebComponent {
         if (exists) {
           return this.message.error(`${$t('_repeatAdd')} "${payload.name}"`)
         }
-        w.unshift(payload as IWebProps)
-        setWebsiteList(websiteList)
-        this.message.success($t('_addSuccess'))
+        this.uploading = true
+        if (this.isLogin) {
+          w.unshift(payload as IWebProps)
+          setWebsiteList(websiteList)
+          this.message.success($t('_addSuccess'))
+        } else if (this.settings.allowCollect) {
+          const res = await saveUserCollect({
+            email: this.settings.email,
+            data: {
+              ...payload,
+              extra: {
+                type: 'create',
+                oneName: websiteList[oneIndex].title,
+                twoName: websiteList[oneIndex].nav[twoIndex].title,
+                threeName:
+                  websiteList[oneIndex].nav[twoIndex].nav[threeIndex].title,
+              },
+            },
+          })
+          if (res.data.success === false) {
+            this.message.error(res.data.message)
+          } else {
+            this.message.error($t('_waitHandle'))
+          }
+        }
       } catch (error: any) {
         this.message.error(error.message)
       }
     }
+    this.callback()
     this.onOk?.emit?.(payload)
     this.onClose()
   }

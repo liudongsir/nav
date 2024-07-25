@@ -11,6 +11,8 @@ export type ThemeType =
 
 type OverType = 'overflow' | 'ellipsis'
 
+type Spider = 'NO' | 'EMPTY' | 'ALWAYS'
+
 export interface ITagPropValues {
   id: number
   name: string
@@ -18,6 +20,8 @@ export interface ITagPropValues {
   createdAt: string
   desc: string
   isInner: boolean
+
+  [key: string]: any
 }
 
 export interface ITagProp {
@@ -136,6 +140,16 @@ export interface ISettings {
 
   showRate: boolean
   mirrorList: Record<string, any>[]
+
+  allowCollect: boolean
+  email: string
+
+  spiderIcon: Spider
+  spiderDescription: Spider
+  spiderTitle: Spider
+  spiderQty: number
+
+  loadingCode: string
 }
 
 export interface IConfig {

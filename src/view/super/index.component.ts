@@ -12,6 +12,8 @@ import {
 } from 'src/utils'
 import { isLogin } from 'src/utils/user'
 import { settings, searchEngineList, websiteList } from 'src/store'
+import { $t } from 'src/locale'
+import event from 'src/utils/mitt'
 
 @Component({
   selector: 'app-side',
@@ -19,6 +21,7 @@ import { settings, searchEngineList, websiteList } from 'src/store'
   styleUrls: ['./index.component.scss'],
 })
 export default class SideComponent {
+  $t = $t
   LOGO_CDN = settings.favicon
   websiteList: INavProps[] = websiteList
   currentList: INavThreeProp[] = []
@@ -30,6 +33,7 @@ export default class SideComponent {
   isLogin = isLogin
   settings = settings
   overIndex = Number.MAX_SAFE_INTEGER
+  searchKeyword = ''
 
   constructor(private router: Router, private activatedRoute: ActivatedRoute) {}
 
@@ -38,6 +42,7 @@ export default class SideComponent {
       const { id, page, q } = queryString()
       this.page = page
       this.id = id
+      this.searchKeyword = q
       this.handleCheckThree(0)
 
       if (q) {
@@ -93,5 +98,11 @@ export default class SideComponent {
 
   trackByItemWeb(a: any, item: any) {
     return item.id
+  }
+
+  openCreateWebModal() {
+    event.emit('CREATE_WEB', {
+      threeIndex: this.selectedIndex,
+    })
   }
 }

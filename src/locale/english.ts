@@ -6,8 +6,11 @@ const english: Record<string, string> = {
   _copyUrl: 'Copy Link',
   _shareWeb: 'Share site',
   _edit: 'Edit',
+  _sort: 'Sort',
+  _refresh: 'Refresh',
   _add: 'Add',
   _del: 'Delete',
+  _apply: 'Apply',
   _batchDel: 'Delete',
   _confirmDel: 'Are you sure you want to delete?',
   _default: 'Default',
@@ -115,6 +118,7 @@ const english: Record<string, string> = {
   _webInfo: 'Web info',
   _systemSet: 'Settings',
   _searchEngines: 'Engines',
+  _userCollect: 'Collect',
   _bookmarkImport: 'Bookmark',
   _tagSettings: 'Tag settings',
   _websiteMang: 'Website',
@@ -157,7 +161,7 @@ const english: Record<string, string> = {
   _showCopy: 'Display Card Copy',
   _showShare: 'Show card sharing',
   _angleMark: 'Angle Mark',
-  _logout: 'Logout',
+  _logout: 'Logout Account',
   _cardStyle: 'Card style',
   _tagPlaceholder: 'Can be empty as a regular label',
   _dragSort: 'Drag to sort',
@@ -169,6 +173,8 @@ const english: Record<string, string> = {
     'Frequent system updates, it is recommended to execute updates regularly to enjoy the latest system functions',
   _clickUpdate: 'Click me to update',
   _enableSEO: 'Enable SEO (loading slightly slower)',
+  _allowCollect: 'Allow users to submit indexed content',
+  _collectMenuView: `Please refer to the user's inclusion menu for specific details`,
   _displaySwitchTheme: 'Display Switch Theme',
   _requestAddress: 'Request Address',
   _requestTip:
@@ -177,7 +183,7 @@ const english: Record<string, string> = {
   _bannerTip:
     'When the height is 0, the width and height of the image will be adaptive, and it is important to ensure that each image has the same size',
   _checkStatus:
-    'Check the status of all website links (time-consuming, recommended to be executed regularly; due to network factors, for reference only)',
+    'Check website link status(For any of the above updates, it is recommended to enable this, as it takes the same amount of time.)',
   _ignore:
     '(This function is not very useful, it is recommended to ignore or remove it)',
   _standard: 'Standard',
@@ -189,6 +195,29 @@ const english: Record<string, string> = {
   _sidebarImg: 'Sidebar image',
   _sidebarTitle: 'Sidebar title',
   _defTitle4: 'Default website title, recommended to be within 4 words',
+  _inputAuthCode: 'Please enter the authorization code',
+  _payTip:
+    'Opening user enrollment requires a payment of ￥99 as a contribution to the stable operation of this website. Thank you for your understanding',
+  _waitHandle: 'Waiting for the stationmaster to handle',
+  _collect: 'Get',
+  _confirmCollect: 'Are you sure?',
+  _pendingGet: 'Getting...',
+  _logoutAuthCode: 'Exit authorization',
+  _spiderRule: 'Spider rule',
+  _spiderIcon: 'Spider icon',
+  _spiderDesc: 'Spider description',
+  _spiderTitle: 'Spider title',
+  _spiderAlways: 'Always update',
+  _spiderStatus: 'Spider Status',
+  _spiderTip:
+    'Crawling rules will be triggered every time saving, affecting the construction speed. Crawling and updating information may be necessary when necessary',
+  _spiderQty: 'Concurrent quantity',
+  _spiderQtyTip: '',
+  _spiderNetTip:
+    'Due to network factors, some websites may not be accessible and can be skipped directly. For reference only',
+  _spiderBuildTip:
+    'After the construction is completed, the data is correct. Please go to the website management and click save once, otherwise the data will not be permanently stored',
+  _associatedLabels: 'Labels',
 }
 
 export default english

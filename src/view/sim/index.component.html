@@ -1,18 +1,21 @@
 <div class="sim">
-  <div class="wallpaper" *ngIf="settings.simThemeImages.length > 0">
+  <div
+    class="wallpaper"
+    *ngIf="settings.simThemeImages.length > 0"
+    [class.bootstrap]="settings.simThemeHeight < 260"
+  >
     <app-swiper
       [images]="settings.simThemeImages"
       [autoplay]="settings.simThemeAutoplay"
       [height]="settings.simThemeHeight"
-    >
-      <div class="bar">
-        <h1 class="title dark-white">
-          {{ settings.simTitle || settings.title }}
-        </h1>
-        <pre class="description dark-white" [innerHTML]="description"></pre>
-        <app-search-engine />
-      </div>
-    </app-swiper>
+    />
+    <div class="bar">
+      <h1 class="title dark-white">
+        {{ settings.simTitle || settings.title }}
+      </h1>
+      <pre class="description dark-white" [innerHTML]="description"></pre>
+      <app-search-engine />
+    </div>
   </div>
 
   <app-search-engine class="hidden search-sm" />
@@ -97,6 +100,8 @@
                   [cardStyle]="'example'"
                   [dataSource]="el"
                   [indexs]="[page, id, i, j]"
+                  [searchKeyword]="searchKeyword"
+                  class="column-border"
                 ></app-card>
               </div>
             </div>
