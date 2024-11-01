@@ -1,5 +1,5 @@
 {
-  "favicon": "https://cdn.jsdelivr.net/gh/xjh22222228/nav-web@image/logo.png",
+  "favicon": "https://gcore.jsdelivr.net/gh/xjh22222228/nav-web@image/logo.png",
   "homeUrl": "https://nav3.cn",
   "language": "zh-CN",
   "loading": "random",
@@ -22,13 +22,13 @@
   "lightOverType": "ellipsis",
   "simThemeImages": [
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner1.jpg",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner1.jpg",
       "url": "",
       "width": null,
       "height": null
     },
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner2.jpg",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner2.jpg",
       "url": "",
       "width": null,
       "height": null
@@ -46,21 +46,21 @@
   "superTitle": "",
   "superImages": [
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/nav-web@image/nav-1717494364392-ad.jpg",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/nav-web@image/nav-1717494364392-ad.jpg",
       "url": "https://haokawx.lot-ml.com/Product/index/454266"
     },
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/public@gh-pages/img/10.png",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/public@gh-pages/img/10.png",
       "url": ""
     }
   ],
   "lightImages": [
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/nav-web@image/nav-1717494364392-ad.jpg",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/nav-web@image/nav-1717494364392-ad.jpg",
       "url": "https://haokawx.lot-ml.com/Product/index/454266"
     },
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/public@gh-pages/img/10.png",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/public@gh-pages/img/10.png",
       "url": ""
     }
   ],
@@ -70,13 +70,13 @@
   "sideThemeAutoplay": true,
   "sideThemeImages": [
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner2.jpg",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner2.jpg",
       "url": "",
       "width": null,
       "height": null
     },
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner1.jpg",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/banner1.jpg",
       "url": "",
       "width": null,
       "height": null
@@ -86,7 +86,7 @@
   "shortcutThemeShowWeather": true,
   "shortcutThemeImages": [
     {
-      "src": "https://cdn.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/background.jpg",
+      "src": "https://gcore.jsdelivr.net/gh/xjh22222228/public@gh-pages/nav/background.jpg",
       "url": "",
       "width": null,
       "height": null
@@ -100,5 +100,23 @@
   "spiderDescription": "NO",
   "spiderTitle": "NO",
   "spiderQty": 20,
-  "loadingCode": ""
+  "loadingCode": "",
+  "runtime": 1730450215874,
+  "openSearch": true,
+  "lightDocTitle": "",
+  "lightFooterHTML": "",
+  "simDocTitle": "",
+  "simFooterHTML": "",
+  "superFooterHTML": "",
+  "superDocTitle": "",
+  "sideDocTitle": "",
+  "sideFooterHTML": "",
+  "sideCollapsed": false,
+  "shortcutDocTitle": "",
+  "shortcutDockCount": 6,
+  "spiderTimeout": 6,
+  "appCardStyle": "retro",
+  "appDocTitle": "",
+  "gitHubCDN": "gcore.jsdelivr.net",
+  "components": []
 }
