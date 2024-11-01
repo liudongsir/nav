@@ -1,14 +1,26 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
 import { Component } from '@angular/core'
 import { $t } from 'src/locale'
 import { FormBuilder, FormGroup } from '@angular/forms'
 import { NzMessageService } from 'ng-zorro-antd/message'
+import { NzNotificationService } from 'ng-zorro-antd/notification'
 import { NzModalService } from 'ng-zorro-antd/modal'
 import { SETTING_PATH } from 'src/constants'
-import { updateFileContent } from 'src/services'
-import { settings } from 'src/store'
+import { updateFileContent, spiderWeb } from 'src/api'
+import { settings, components } from 'src/store'
+import { isSelfDevelop, compilerTemplate } from 'src/utils/util'
+import { componentTitleMap } from '../component/types'
+import event from 'src/utils/mitt'
+import footTemplate from 'src/components/footer/template'
+
+// 额外添加的字段，但不添加到配置中
+const extraForm: Record<string, any> = {
+  footTemplate: '',
+  componentOptions: [],
+}
 
 @Component({
   selector: 'system-setting',
@@ -20,21 +32,61 @@ export default class SystemSettingComponent {
   validateForm!: FormGroup
   submitting: boolean = false
   settings = settings
+  tabActive = 0
+  isSelfDevelop = isSelfDevelop
+  textareaSize = { minRows: 3, maxRows: 20 }
 
   constructor(
     private fb: FormBuilder,
+    private notification: NzNotificationService,
     private message: NzMessageService,
     private modal: NzModalService
   ) {
-    this.validateForm = this.fb.group({
+    extraForm['componentOptions'] = components.map((item) => {
+      const checked = settings.components.some(
+        (c) => item.type === c.type && item.id === c.id
+      )
+      return {
+        label: componentTitleMap[item.type],
+        value: item.id,
+        type: item.type,
+        id: item.id,
+        checked,
+      }
+    })
+    const group: any = {
+      ...extraForm,
       ...settings,
+    }
+    const groupPayload: any = {}
+    for (const k in group) {
+      groupPayload[k] = [group[k]]
+    }
+    this.validateForm = this.fb.group(groupPayload)
+
+    event.on('GITHUB_USER_INFO', (data: any) => {
+      this.validateForm
+        .get('email')!
+        .setValue(this.settings.email || data.email || '')
     })
   }
 
-  ngOnInit() {}
+  get cdnUrl(): string {
+    return this.validateForm.get('gitHubCDN')?.value
+  }
+
+  get footTemplate(): string {
+    return compilerTemplate(this.validateForm.get('footerContent')?.value || '')
+  }
+
+  onFootTemplateChange(v: string) {
+    this.validateForm
+      .get('footerContent')!
+      .setValue(footTemplate[v]?.trim?.() || '')
+  }
 
   onLogoChange(data: any) {
-    this.settings.favicon = data.cdn || data.target?.value || ''
+    this.settings.favicon = data.cdn || ''
   }
 
   // Sim ===========================
@@ -127,7 +179,7 @@ export default class SystemSettingComponent {
 
   onChangeSideJumpUrl(e: any, idx: number) {
     const value = e.target.value.trim()
-    this.settings.sideThemeImages[idx]['src'] = value
+    this.settings.sideThemeImages[idx]['url'] = value
   }
 
   onDeleteSideBanner(idx: number) {
@@ -141,39 +193,32 @@ export default class SystemSettingComponent {
     })
   }
 
-  // Mirror ===========================
-  onMirrorBannerChange(data: any, idx: number) {
-    this.settings.sideThemeImages[idx]['src'] = data.cdn
-  }
-
-  onAddMirror() {
-    this.settings.mirrorList.push({
-      url: '',
-      icon: '',
-      name: '',
-    })
-  }
-
-  onDelMirror(idx: number) {
-    this.settings.mirrorList.splice(idx, 1)
-  }
-
-  onChangeMirrorUrl(e: any, idx: number) {
-    const value = e.target.value.trim()
-    this.settings.mirrorList[idx]['url'] = value
-  }
-
-  onChangeMirrorName(e: any, idx: number) {
-    const value = e.target.value.trim()
-    this.settings.mirrorList[idx]['name'] = value
-  }
-
   onShortcutImgChange(e: any) {
     let url = e?.target?.value?.trim() || e.cdn
     if (!url) {
       url = ''
     }
     this.settings.shortcutThemeImages[0]['src'] = url
+  }
+
+  handleSpider() {
+    if (this.submitting) {
+      return
+    }
+    this.submitting = true
+    spiderWeb()
+      .then((res) => {
+        this.notification.success(
+          `爬取完成（${res.data.time}秒）`,
+          '爬取完成并保存成功',
+          {
+            nzDuration: 0,
+          }
+        )
+      })
+      .finally(() => {
+        this.submitting = false
+      })
   }
 
   handleSubmit() {
@@ -189,8 +234,9 @@ export default class SystemSettingComponent {
         function filterImage(item: Record<string, any>) {
           return item['src']
         }
+        const formValues = this.validateForm.value
         const values = {
-          ...this.validateForm.value,
+          ...formValues,
           favicon: this.settings.favicon,
           simThemeImages: this.settings.simThemeImages.filter(filterImage),
           shortcutThemeImages:
@@ -198,14 +244,17 @@ export default class SystemSettingComponent {
           sideThemeImages: this.settings.sideThemeImages.filter(filterImage),
           superImages: this.settings.superImages.filter(filterImage),
           lightImages: this.settings.lightImages.filter(filterImage),
-          mirrorList: this.settings.mirrorList.filter(
-            (item) => item['url'] && item['name']
-          ),
+          components: formValues.componentOptions
+            .filter((item: any) => item.checked)
+            .map((item: any) => ({ type: item.type, id: item.id })),
+        }
+        for (const k in extraForm) {
+          delete values[k]
         }
 
         this.submitting = true
         updateFileContent({
-          message: 'Update settings',
+          message: 'update settings',
           content: JSON.stringify(values),
           path: SETTING_PATH,
         })

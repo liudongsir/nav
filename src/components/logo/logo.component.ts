@@ -1,7 +1,10 @@
-import { Component, Input } from '@angular/core'
-import { getCDN } from 'src/services'
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
+// See https://github.com/xjh22222228/nav
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core'
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-logo',
   templateUrl: './logo.component.html',
   styleUrls: ['./logo.component.scss'],
@@ -9,25 +12,11 @@ import { getCDN } from 'src/services'
 export class LogoComponent {
   @Input() src: string = ''
   @Input() name: string = ''
-  @Input() colour: string = '#1890ff'
   @Input() size: number = 35
+  @Input() radius: number = 3
   @Input() check: boolean = true
-
-  hasError = false
 
   constructor() {}
 
   ngOnInit() {}
-
-  get url(): string {
-    if (this.src?.startsWith('nav-')) {
-      return getCDN(this.src)
-    } else {
-      return this.src
-    }
-  }
-
-  onError() {
-    this.hasError = true
-  }
 }

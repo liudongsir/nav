@@ -1,21 +1,24 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
-import { Component, OnInit, Input } from '@angular/core'
-import { NzMessageService } from 'ng-zorro-antd/message'
-import { isLogin } from 'src/utils/user'
 import {
-  setWebsiteList,
-  copyText,
-  deleteByWeb,
-  getTextContent,
-} from 'src/utils'
-import { INavProps, IWebProps } from 'src/types'
+  Component,
+  OnInit,
+  Input,
+  ChangeDetectionStrategy,
+} from '@angular/core'
+import { isLogin } from 'src/utils/user'
+import { copyText, getTextContent } from 'src/utils'
+import { setWebsiteList, deleteByWeb } from 'src/utils/web'
+import { INavProps, IWebProps, ICardType } from 'src/types'
 import { $t } from 'src/locale'
-import { settings, websiteList, tagMap } from 'src/store'
+import { settings, websiteList } from 'src/store'
+import { JumpService } from 'src/services/jump'
 import event from 'src/utils/mitt'
 
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'app-card',
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
@@ -24,18 +27,16 @@ export class CardComponent implements OnInit {
   @Input() searchKeyword: string = ''
   @Input() dataSource: IWebProps | Record<string, any> = {}
   @Input() indexs: Array<number> = []
-  @Input() cardStyle: string = 'standard'
+  @Input() cardStyle: ICardType = 'standard'
 
   $t = $t
-  objectKeys = Object.keys
   settings = settings
   websiteList: INavProps[] = websiteList
   isLogin: boolean = isLogin
   copyUrlDone = false
   copyPathDone = false
-  tagMap = tagMap
 
-  constructor(private message: NzMessageService) {}
+  constructor(public jumpService: JumpService) {}
 
   ngOnInit(): void {}
 
@@ -83,6 +84,10 @@ export class CardComponent implements OnInit {
       indexs: this.indexs,
       data: [this.dataSource],
     })
+  }
+
+  get html() {
+    return this.dataSource.desc.slice(1)
   }
 
   get getRate() {

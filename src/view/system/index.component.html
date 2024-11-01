@@ -2,7 +2,7 @@
   <nz-layout>
     <nz-sider class="sidebar" nzWidth="150px" nzTheme="light">
       <ul nz-menu nzMode="inline" class="sider-menu">
-        <li nz-submenu nzOpen nzTitle="超级系统">
+        <li nz-submenu nzOpen nzTitle="System">
           <ul>
             <li
               nz-menu-item
@@ -10,6 +10,13 @@
               (click)="goRoute('/system/web')"
             >
               {{ $t('_websiteMang') }}
+            </li>
+            <li
+              nz-menu-item
+              [nzSelected]="currentMenu === 'setting'"
+              (click)="goRoute('/system/setting')"
+            >
+              {{ $t('_systemSet') }}
             </li>
             <li
               nz-menu-item
@@ -34,17 +41,35 @@
             </li>
             <li
               nz-menu-item
-              [nzSelected]="currentMenu === 'collect'"
-              (click)="goRoute('/system/collect')"
+              [nzSelected]="currentMenu === 'component'"
+              (click)="goRoute('/system/component')"
+              *ngIf="isAuthz || isSelfDevelop"
             >
-              {{ $t('_userCollect') }}
+              {{ $t('_components') }}
             </li>
             <li
               nz-menu-item
-              [nzSelected]="currentMenu === 'setting'"
-              (click)="goRoute('/system/setting')"
+              [nzSelected]="currentMenu === 'bookmarkExport'"
+              (click)="goRoute('/system/bookmarkExport')"
+              *ngIf="isAuthz"
             >
-              {{ $t('_systemSet') }}
+              {{ $t('_bookmarkExport') }}
+            </li>
+            <li
+              nz-menu-item
+              [nzSelected]="currentMenu === 'collect'"
+              (click)="goRoute('/system/collect')"
+              *ngIf="isAuthz || isSelfDevelop"
+            >
+              {{ $t('_userCollect') }}
+            </li>
+
+            <li
+              nz-menu-item
+              [nzSelected]="currentMenu === 'vip'"
+              (click)="goRoute('/system/vip')"
+            >
+              {{ $t('_vipAuth') }}
             </li>
             <li
               nz-menu-item
@@ -52,14 +77,6 @@
               (click)="goRoute('/system/info')"
             >
               {{ $t('_webInfo') }}
-            </li>
-            <!-- <li nz-menu-item [nzSelected]="currentMenu === 'angle'" (click)="goRoute('/system/angle')">{{ $t('_angleMark') }}</li> -->
-            <li
-              nz-menu-item
-              [nzSelected]="currentMenu === 'about'"
-              (click)="goRoute('/system/about')"
-            >
-              {{ $t('_about') }}
             </li>
           </ul>
         </li>
@@ -75,6 +92,15 @@
           <button nz-button style="margin-left: 15px" (click)="logout()">
             {{ $t('_logout') }}
           </button>
+          <img [src]="currentVersionSrc" class="ml-2.5" />
+          <a href="https://github.com/xjh22222228/nav/releases" target="_blank">
+            <img
+              src="https://img.shields.io/github/v/release/xjh22222228/nav"
+              class="ml-2.5"
+            />
+          </a>
+
+          <span class="ml-2.5" *ngIf="!isSelfDevelop">{{ date }}</span>
         </div>
 
         <router-outlet></router-outlet>

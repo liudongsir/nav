@@ -1,22 +1,18 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
 import { Component, Output, EventEmitter } from '@angular/core'
-import {
-  getWebInfo,
-  getTextContent,
-  updateByWeb,
-  queryString,
-  setWebsiteList,
-} from 'src/utils'
+import { queryString, getTextContent } from 'src/utils'
+import { setWebsiteList, updateByWeb } from 'src/utils/web'
 import { FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms'
-import { IWebProps } from 'src/types'
+import { IWebProps, IWebTag, TopType } from 'src/types'
 import { NzMessageService } from 'ng-zorro-antd/message'
-import { createFile, saveUserCollect } from 'src/services'
+import { saveUserCollect, getWebInfo } from 'src/api'
 import { $t } from 'src/locale'
 import { settings, websiteList, tagList, tagMap } from 'src/store'
-import event from 'src/utils/mitt'
 import { isLogin } from 'src/utils/user'
+import event from 'src/utils/mitt'
 
 @Component({
   selector: 'app-create-web',
@@ -29,17 +25,21 @@ export class CreateWebComponent {
   $t = $t
   isLogin: boolean = isLogin
   validateForm!: FormGroup
-  iconUrl = ''
   tagList = tagList
   uploading = false
   getting = false
   settings = settings
   showModal = false
   detail: any = null
+  isMove = false // 提交完是否可以移动
   oneIndex: number | undefined
   twoIndex: number | undefined
   threeIndex: number | undefined
   callback: Function = () => {}
+  topOptions = [
+    { label: TopType[1], value: TopType.Side, checked: false },
+    { label: TopType[2], value: TopType.Shortcut, checked: false },
+  ]
 
   constructor(private fb: FormBuilder, private message: NzMessageService) {
     event.on('CREATE_WEB', (props: any) => {
@@ -51,10 +51,12 @@ export class CreateWebComponent {
         this[k] = props[k]
       }
     })
+
     this.validateForm = this.fb.group({
       title: ['', [Validators.required]],
       url: ['', [Validators.required]],
       top: [false],
+      topOptions: [this.topOptions],
       ownVisible: [false],
       rate: [5],
       icon: [''],
@@ -68,10 +70,15 @@ export class CreateWebComponent {
     return this.validateForm.get('urlArr') as FormArray
   }
 
+  get isTop(): boolean {
+    return this.validateForm.get('top')?.value || false
+  }
+
   open(
     ctx: this,
     props:
       | {
+          isMove?: boolean
           detail: IWebProps | null
           oneIndex: number | undefined
           twoIndex: number | undefined
@@ -85,6 +92,7 @@ export class CreateWebComponent {
     ctx.oneIndex = props.oneIndex
     ctx.twoIndex = props.twoIndex
     ctx.threeIndex = props.threeIndex
+    ctx.isMove = !!props.isMove
     this.validateForm.get('title')!.setValue(getTextContent(detail?.name))
     this.validateForm.get('desc')!.setValue(getTextContent(detail?.desc))
     this.validateForm.get('index')!.setValue(detail?.index ?? '')
@@ -94,19 +102,33 @@ export class CreateWebComponent {
     this.validateForm.get('ownVisible')!.setValue(detail?.ownVisible ?? false)
     this.validateForm.get('rate')!.setValue(detail?.rate ?? 5)
     if (detail) {
-      if (typeof detail.urls === 'object') {
-        for (let k in detail.urls) {
-          // @ts-ignore
-          this.validateForm?.get('urlArr').push?.(
+      if (Array.isArray(detail.tags)) {
+        detail.tags.forEach((item: IWebTag) => {
+          ;(this.validateForm?.get('urlArr') as FormArray).push?.(
             this.fb.group({
-              id: Number(k),
-              name: tagMap[k]?.name ?? '',
-              url: detail.urls[k],
+              id: Number(item.id),
+              name: tagMap[item.id].name ?? '',
+              url: item.url || '',
             })
           )
-        }
+        })
       }
     }
+    const topOptions = this.topOptions.map((item) => {
+      item.checked = false
+      type V = typeof item.value
+      if (detail?.topTypes) {
+        const checked = detail.topTypes.some((value: V) => value === item.value)
+        item.checked = checked
+      }
+      return item
+    })
+
+    this.validateForm.get('topOptions')!.setValue(topOptions)
+  }
+
+  get iconUrl() {
+    return this.validateForm.get('icon')?.value || ''
   }
 
   onClose() {
@@ -115,40 +137,54 @@ export class CreateWebComponent {
     this.validateForm.reset()
     this.showModal = false
     this.detail = null
-    this.iconUrl = ''
     this.oneIndex = undefined
     this.twoIndex = undefined
     this.threeIndex = undefined
     this.uploading = false
+    this.isMove = false
     this.callback = Function
   }
 
   async onUrlBlur(e: any) {
-    const url = e.target?.value
+    if (!settings.openSearch) {
+      return
+    }
+
+    let url = e.target?.value
     if (!url) {
       return
     }
-    this.getting = true
-    const res = await getWebInfo(url)
-    if (res['url'] != null) {
-      this.iconUrl = res['url']
-      this.validateForm.get('icon')!.setValue(this.iconUrl)
-    }
-    if (res['title'] != null) {
-      this.validateForm.get('title')!.setValue(res['title'])
-    }
-    if (res['description'] != null) {
-      this.validateForm.get('desc')!.setValue(res['description'])
-    }
-    if (res['status'] === false) {
-      this.message.error('自动抓取失败，请手动写入')
-    }
-    this.getting = false
+    try {
+      // test url
+      if (url[0] === '!') {
+        url = url.slice(1)
+      }
+      new URL(url)
+
+      const iconVal = this.validateForm.get('icon')?.value
+      const titleVal = this.validateForm.get('title')?.value
+      const descVal = this.validateForm.get('desc')?.value
+      if (iconVal && titleVal && descVal) {
+        return
+      }
+
+      this.getting = true
+      const res = await getWebInfo(url)
+      if (res['url'] != null && !iconVal) {
+        this.validateForm.get('icon')!.setValue(res['url'])
+      }
+      if (res['title'] != null && !titleVal) {
+        this.validateForm.get('title')!.setValue(res['title'])
+      }
+      if (res['description'] != null && !descVal) {
+        this.validateForm.get('desc')!.setValue(res['description'])
+      }
+      this.getting = false
+    } catch (error) {}
   }
 
   addMoreUrl() {
-    // @ts-ignore
-    this.validateForm.get('urlArr').push(
+    ;(this.validateForm.get('urlArr') as FormArray).push(
       this.fb.group({
         id: '',
         name: '',
@@ -158,46 +194,11 @@ export class CreateWebComponent {
   }
 
   lessMoreUrl(idx: number) {
-    // @ts-ignore
-    this.validateForm.get('urlArr').removeAt(idx)
+    ;(this.validateForm.get('urlArr') as FormArray).removeAt(idx)
   }
 
-  handleUploadImage(file: File) {
-    const that = this
-    const fileReader = new FileReader()
-    fileReader.readAsDataURL(file)
-    fileReader.onload = function () {
-      that.uploading = true
-      that.iconUrl = this.result as string
-      const url = that.iconUrl.split(',')[1]
-      const path = `nav-${Date.now()}-${file.name}`
-
-      createFile({
-        branch: 'image',
-        message: 'create image',
-        content: url,
-        isEncode: false,
-        path,
-      })
-        .then(() => {
-          that.validateForm.get('icon')!.setValue(path)
-          that.message.success($t('_uploadSuccess'))
-        })
-        .finally(() => {
-          that.uploading = false
-        })
-    }
-  }
-
-  onChangeFile(e: any) {
-    const { files } = e.target
-    if (files.length <= 0) return
-    const file = files[0]
-
-    if (!file.type.startsWith('image')) {
-      return this.message.error($t('_notUpload'))
-    }
-    this.handleUploadImage(file)
+  onChangeFile(data: any) {
+    this.validateForm.get('icon')!.setValue(data.cdn)
   }
 
   async handleOk() {
@@ -206,9 +207,9 @@ export class CreateWebComponent {
       this.validateForm.controls[i].updateValueAndValidity()
     }
 
-    const createdAt = new Date().toString()
-    let urls: Record<string, any> = {}
-    let { title, icon, url, top, ownVisible, rate, desc, index } =
+    const createdAt = Date.now()
+    const tags: IWebTag[] = []
+    let { title, icon, url, top, ownVisible, rate, desc, index, topOptions } =
       this.validateForm.value
 
     if (!title || !url) return
@@ -216,34 +217,36 @@ export class CreateWebComponent {
     title = title.trim()
     const urlArr = this.validateForm.get('urlArr')?.value || []
     urlArr.forEach((item: any) => {
-      if (item.id != null) {
-        urls[item.id] = item.url
+      if (item.id) {
+        tags.push({
+          id: item.id,
+          url: item.url,
+        })
       }
     })
+
+    type TopTypes = typeof this.topOptions
+    const topTypes: number[] = (topOptions as TopTypes)
+      .filter((item) => item.checked)
+      .map((item) => item.value)
 
     const payload = {
       id: -Date.now(),
       name: title,
-      createdAt: (this.detail as any)?.createdAt ?? createdAt,
-      rate: rate ?? 5,
-      desc: desc || '',
-      top: top ?? false,
+      createdAt: this.detail?.createdAt ?? createdAt,
+      rate,
+      desc,
+      top,
       index,
-      ownVisible: ownVisible ?? false,
+      ownVisible,
       icon,
       url,
-      urls,
+      tags,
+      topTypes,
     }
 
     if (this.detail) {
-      const ok = updateByWeb(
-        {
-          ...this.detail,
-          name: getTextContent(this.detail.name),
-          desc: getTextContent(this.detail.desc),
-        },
-        payload as IWebProps
-      )
+      const ok = updateByWeb(this.detail, payload as IWebProps)
       if (ok) {
         this.message.success($t('_modifySuccess'))
       } else {
@@ -254,36 +257,36 @@ export class CreateWebComponent {
         const { page, id } = queryString()
         const oneIndex = this.oneIndex ?? page
         const twoIndex = this.twoIndex ?? id
-        const threeIndex = this.threeIndex as number
+        const threeIndex = this.threeIndex || 0
         const w = websiteList[oneIndex].nav[twoIndex].nav[threeIndex].nav
-        const exists = w.some((item: any) => item.name === payload.name)
-        if (exists) {
-          return this.message.error(`${$t('_repeatAdd')} "${payload.name}"`)
-        }
         this.uploading = true
         if (this.isLogin) {
           w.unshift(payload as IWebProps)
           setWebsiteList(websiteList)
           this.message.success($t('_addSuccess'))
-        } else if (this.settings.allowCollect) {
-          const res = await saveUserCollect({
-            email: this.settings.email,
-            data: {
-              ...payload,
-              extra: {
-                type: 'create',
-                oneName: websiteList[oneIndex].title,
-                twoName: websiteList[oneIndex].nav[twoIndex].title,
-                threeName:
-                  websiteList[oneIndex].nav[twoIndex].nav[threeIndex].title,
-              },
-            },
-          })
-          if (res.data.success === false) {
-            this.message.error(res.data.message)
-          } else {
-            this.message.error($t('_waitHandle'))
+          if (this.isMove) {
+            event.emit('MOVE_WEB', {
+              indexs: [oneIndex, twoIndex, threeIndex, 0],
+              data: [payload],
+            })
           }
+        } else if (this.settings.allowCollect) {
+          try {
+            const params = {
+              data: {
+                ...payload,
+                extra: {
+                  type: 'create',
+                  oneName: websiteList[oneIndex].title,
+                  twoName: websiteList[oneIndex].nav[twoIndex].title,
+                  threeName:
+                    websiteList[oneIndex].nav[twoIndex].nav[threeIndex].title,
+                },
+              },
+            }
+            await saveUserCollect(params)
+            this.message.success($t('_waitHandle'))
+          } catch {}
         }
       } catch (error: any) {
         this.message.error(error.message)

@@ -101,16 +101,22 @@
       }
     }
     .topnav {
+      flex: 1;
       display: flex;
       overflow: hidden;
       overflow-x: auto;
     }
   }
 
+  .component-box {
+    min-width: var(--width);
+    max-width: 100%;
+    margin: 10px auto -10px;
+  }
+
   .main-box {
     width: var(--width);
-    margin: 0 auto;
-    margin-top: 24px;
+    margin: 24px auto 40px;
     display: flex;
     flex: 1;
     column-gap: 20px;
@@ -119,6 +125,7 @@
       top: var(--stickyTop);
       width: var(--leftWidth);
       min-width: var(--leftWidth);
+      max-height: calc(100vh - 110px);
       text-align: left;
       background-color: #fff;
       padding: 8px;
@@ -126,7 +133,6 @@
       border-radius: 4px;
       overflow: hidden;
       overflow-y: auto;
-      max-height: calc(100vh - 100px);
       border: 1px solid transparent;
       .bar-item {
         padding: 10px 17px;
@@ -218,7 +224,7 @@
       top: var(--stickyTop);
       width: var(--rightWidth);
       min-width: var(--rightWidth);
-      max-height: calc(100vh - 100px);
+      max-height: calc(100vh - 110px);
       overflow: hidden;
       overflow-y: auto;
       .adsimg {
@@ -236,15 +242,12 @@
 
   ::ng-deep {
     .standard {
-      margin-bottom: 15px;
+      margin: 0 10px 15px 10px;
     }
-    #app-footer {
-      margin-top: 40px;
-    }
-    #app-footer,
-    #app-footer .copyright {
-      margin-bottom: 10px;
-      color: #666;
+    .retro2,
+    .example2,
+    .original2 {
+      margin: 10px;
     }
   }
 }

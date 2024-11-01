@@ -1,15 +1,15 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
 import { Component } from '@angular/core'
 import { $t } from 'src/locale'
 import { NzMessageService } from 'ng-zorro-antd/message'
 import { ISearchEngineProps } from 'src/types'
-import { updateFileContent } from 'src/services'
+import { updateFileContent } from 'src/api'
 import { NzModalService } from 'ng-zorro-antd/modal'
 import { SEARCH_PATH } from 'src/constants'
 import { searchEngineList } from 'src/store'
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop'
 
 @Component({
   selector: 'system-tag',
@@ -27,6 +27,10 @@ export default class SystemSearchComponent {
   ) {}
 
   handleAdd() {
+    const isEmpty = this.searchList.some((item) => !item.name.trim())
+    if (isEmpty) {
+      return
+    }
     this.searchList.unshift({
       name: '',
       url: '',
@@ -39,6 +43,28 @@ export default class SystemSearchComponent {
 
   handleDelete(idx: number) {
     this.searchList.splice(idx, 1)
+  }
+
+  // 上移
+  moveUp(index: number): void {
+    if (index === 0) {
+      return
+    }
+    const current = this.searchList[index]
+    const prev = this.searchList[index - 1]
+    this.searchList[index - 1] = current
+    this.searchList[index] = prev
+  }
+
+  // 下移
+  moveDown(index: number): void {
+    if (index === this.searchList.length - 1) {
+      return
+    }
+    const current = this.searchList[index]
+    const next = this.searchList[index + 1]
+    this.searchList[index + 1] = current
+    this.searchList[index] = next
   }
 
   handleSubmit() {
@@ -66,8 +92,8 @@ export default class SystemSearchComponent {
 
         this.submitting = true
         updateFileContent({
-          message: 'Update Search',
-          content: JSON.stringify(this.searchList, null, 2),
+          message: 'update search',
+          content: JSON.stringify(this.searchList),
           path: SEARCH_PATH,
         })
           .then(() => {
@@ -80,11 +106,11 @@ export default class SystemSearchComponent {
     })
   }
 
-  onChangeUpload(path: any, idx: number) {
-    this.searchList[idx].icon = path.cdn
+  trackByItem(a: any, item: any) {
+    return item.name
   }
 
-  onDrop(event: CdkDragDrop<string[]>): void {
-    moveItemInArray(this.searchList, event.previousIndex, event.currentIndex)
+  onChangeUpload(path: any, idx: number) {
+    this.searchList[idx].icon = path.cdn
   }
 }

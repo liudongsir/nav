@@ -1,4 +1,5 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
 import qs from 'qs'
@@ -8,17 +9,13 @@ import {
   INavThreeProp,
   INavProps,
   ISearchEngineProps,
+  IWebTag,
 } from '../types'
-import * as db from '../../data/db.json'
-import * as s from '../../data/search.json'
 import { STORAGE_KEY_MAP } from 'src/constants'
 import { isLogin } from './user'
 import { SearchType } from 'src/components/search-engine/index'
-import { getIconUrl } from 'src/services'
-
-export const websiteList: INavProps[] = getWebsiteList()
-
-const searchEngineList: ISearchEngineProps[] = (s as any).default
+import { websiteList, searchEngineList, settings } from 'src/store'
+import { $t } from 'src/locale'
 
 export function randomInt(max: number) {
   return Math.floor(Math.random() * max)
@@ -47,24 +44,23 @@ export function fuzzySearch(
         f(item.nav)
       }
 
-      if (navData.length > 50) break
-
       if (item.name) {
+        item.name = getTextContent(item.name)
+        item.desc = getTextContent(item.desc)
         const name = item.name.toLowerCase()
         const desc = item.desc.toLowerCase()
         const url = item.url.toLowerCase()
         const search = keyword.toLowerCase()
-        const urls: string[] = Object.values(item.urls || {})
 
-        function searchTitle(): boolean {
+        const searchTitle = (): boolean => {
           if (name.includes(search)) {
-            let result = { ...item }
+            let result = item
             const regex = new RegExp(`(${keyword})`, 'i')
             result.__name__ = result.name
-            result.name = result.name.replace(regex, `$1`.bold())
+            result.name = result.name.replace(regex, '<b>$1</b>')
 
-            if (!urlRecordMap[result.url]) {
-              urlRecordMap[result.url] = true
+            if (!urlRecordMap[result.id]) {
+              urlRecordMap[result.id] = true
               navData.push(result)
               return true
             }
@@ -72,34 +68,55 @@ export function fuzzySearch(
           return false
         }
 
-        function searchUrl() {
-          if (url?.includes?.(keyword.toLowerCase())) {
-            if (!urlRecordMap[item.url]) {
-              urlRecordMap[item.url] = true
+        const searchUrl = () => {
+          if (url?.includes?.(search)) {
+            if (!urlRecordMap[item.id]) {
+              urlRecordMap[item.id] = true
               navData.push(item)
               return true
             }
           }
 
-          const find = urls.some((item: string) => item.includes(keyword))
+          const find = item.tags.some((item: IWebTag) =>
+            item.url?.includes(keyword)
+          )
           if (find) {
-            if (!urlRecordMap[item.url]) {
-              urlRecordMap[item.url] = true
+            if (!urlRecordMap[item.id]) {
+              urlRecordMap[item.id] = true
               navData.push(item)
               return true
             }
           }
         }
 
-        function searchDesc(): boolean {
+        const searchDesc = (): boolean => {
+          if (desc[0] === '!') {
+            return false
+          }
           if (desc.includes(search)) {
-            let result = { ...item }
+            let result = item
             const regex = new RegExp(`(${keyword})`, 'i')
             result.__desc__ = result.desc
-            result.desc = result.desc.replace(regex, `$1`.bold())
+            result.desc = result.desc.replace(regex, '<b>$1</b>')
 
-            if (!urlRecordMap[result.url]) {
-              urlRecordMap[result.url] = true
+            if (!urlRecordMap[result.id]) {
+              urlRecordMap[result.id] = true
+              navData.push(result)
+              return true
+            }
+          }
+          return false
+        }
+
+        const searchQuick = (): boolean => {
+          if (item.top && name.includes(search)) {
+            let result = item
+            const regex = new RegExp(`(${keyword})`, 'i')
+            result.__name__ = result.name
+            result.name = result.name.replace(regex, '<b>$1</b>')
+
+            if (!urlRecordMap[result.id]) {
+              urlRecordMap[result.id] = true
               navData.push(result)
               return true
             }
@@ -119,6 +136,10 @@ export function fuzzySearch(
 
             case SearchType.Desc:
               searchDesc()
+              break
+
+            case SearchType.Quick:
+              searchQuick()
               break
 
             default:
@@ -227,86 +248,6 @@ export function queryString(): {
   }
 }
 
-export function adapterWebsiteList(websiteList: any[]) {
-  function filterOwn(item: IWebProps) {
-    if (item.ownVisible && !isLogin) {
-      return false
-    }
-    return true
-  }
-  websiteList = websiteList.filter(filterOwn)
-  for (let i = 0; i < websiteList.length; i++) {
-    const item = websiteList[i]
-
-    if (Array.isArray(item.nav)) {
-      item.nav = item.nav.filter(filterOwn)
-      adapterWebsiteList(item.nav)
-    }
-  }
-
-  return websiteList
-}
-
-export function getWebsiteList(): INavProps[] {
-  let webSiteList = adapterWebsiteList((db as any).default)
-  const scriptElAll = document.querySelectorAll('script')
-  const scriptUrl = scriptElAll[scriptElAll.length - 1].src
-  const storageScriptUrl = window.localStorage.getItem(STORAGE_KEY_MAP.s_url)
-
-  // 检测到网站更新，清除缓存本地保存记录失效
-  if (storageScriptUrl !== scriptUrl) {
-    const whiteList = [
-      STORAGE_KEY_MAP.token,
-      STORAGE_KEY_MAP.isDark,
-      STORAGE_KEY_MAP.authCode,
-    ]
-    const len = window.localStorage.length
-    for (let i = 0; i < len; i++) {
-      const key = window.localStorage.key(i) as string
-      if (whiteList.includes(key)) {
-        continue
-      }
-      window.localStorage.removeItem(key)
-    }
-    window.localStorage.setItem(STORAGE_KEY_MAP.s_url, scriptUrl)
-    return webSiteList
-  }
-
-  try {
-    const w: any = window.localStorage.getItem(STORAGE_KEY_MAP.website)
-    const json = JSON.parse(w)
-    if (Array.isArray(json)) {
-      webSiteList = json
-    }
-  } catch {}
-
-  return webSiteList
-}
-
-export function setWebsiteList(v?: INavProps[]) {
-  v = v || websiteList
-
-  window.localStorage.setItem(STORAGE_KEY_MAP.website, JSON.stringify(v))
-}
-
-export function toggleCollapseAll(wsList?: INavProps[]): boolean {
-  wsList ||= websiteList
-
-  const { page, id } = queryString()
-  const collapsed = !wsList[page].nav[id].collapsed
-
-  wsList[page].nav[id].collapsed = collapsed
-
-  wsList[page].nav[id].nav.map((item) => {
-    item.collapsed = collapsed
-    return item
-  })
-
-  setWebsiteList(wsList)
-
-  return collapsed
-}
-
 export function setLocation() {
   const { page, id } = queryString()
 
@@ -324,7 +265,11 @@ export function getDefaultSearchEngine(): ISearchEngineProps {
   try {
     const engine = window.localStorage.getItem(STORAGE_KEY_MAP.engine)
     if (engine) {
-      DEFAULT = JSON.parse(engine)
+      const local = JSON.parse(engine)
+      const findItem = searchEngineList.find((item) => item.name === local.name)
+      if (findItem) {
+        DEFAULT = findItem
+      }
     }
   } catch {}
   return DEFAULT
@@ -343,18 +288,6 @@ export function isDark(): boolean {
   }
 
   return Boolean(Number(storageVal))
-}
-
-export async function getWebInfo(url: string): Promise<Record<string, any>> {
-  try {
-    const res = await getIconUrl(url)
-    return {
-      ...res.data,
-    }
-  } catch (error) {}
-  return {
-    status: false,
-  }
 }
 
 export function copyText(el: Event, text: string): Promise<boolean> {
@@ -402,64 +335,10 @@ export async function isValidImg(url: string): Promise<boolean> {
   })
 }
 
-export function deleteByWeb(data: IWebProps) {
-  function f(arr: any[]) {
-    for (let i = 0; i < arr.length; i++) {
-      const item = arr[i]
-      if (item.name) {
-        if (item.id === data.id) {
-          arr.splice(i, 1)
-          const { q } = queryString()
-          q && window.location.reload()
-          break
-        }
-        continue
-      }
-
-      if (Array.isArray(item.nav)) {
-        f(item.nav)
-      }
-    }
-  }
-
-  f(websiteList)
-  setWebsiteList(websiteList)
-}
-
-export function updateByWeb(oldData: IWebProps, newData: IWebProps) {
-  const keys = Object.keys(newData)
-  let ok = false
-  function f(arr: any[]) {
-    for (let i = 0; i < arr.length; i++) {
-      const item = arr[i]
-      if (item.name) {
-        if (item.id === oldData.id) {
-          ok = true
-          for (let k of keys) {
-            item[k] = newData[k]
-          }
-          break
-        }
-        continue
-      }
-
-      if (Array.isArray(item.nav)) {
-        f(item.nav)
-      }
-    }
-  }
-
-  f(websiteList)
-  setWebsiteList(websiteList)
-  return ok
-}
-
 // value 可能含有标签元素，用于过滤掉标签获取纯文字
 export function getTextContent(value: string): string {
   if (!value) return ''
-  const div = document.createElement('div')
-  div.innerHTML = value
-  return div.textContent ?? ''
+  return value.replace(/<b>|<\/b>/g, '')
 }
 
 export function matchCurrentList(): INavThreeProp[] {
@@ -483,8 +362,8 @@ export function matchCurrentList(): INavThreeProp[] {
   return data
 }
 
-export function addZero(n: number): string | number {
-  return n < 10 ? `0${n}` : n
+export function addZero(n: number): string {
+  return n < 10 ? `0${n}` : String(n)
 }
 
 // 获取第几个元素超出父节点宽度
@@ -506,4 +385,49 @@ export function getOverIndex(selector: string): number {
     }
   }
   return overIndex
+}
+
+export function isMobile() {
+  return 'ontouchstart' in window
+}
+
+// 今年第几天
+export function getDayOfYear() {
+  const now = new Date()
+  const startOfYear = new Date(now.getFullYear(), 0, 0)
+  // @ts-ignore
+  const diff = now - startOfYear
+  const oneDay = 1000 * 60 * 60 * 24
+  return Math.floor(diff / oneDay)
+}
+
+export function getDateTime() {
+  const weeks = $t('_weeks')
+  const now = new Date()
+  const year = now.getFullYear()
+  const hours = addZero(now.getHours())
+  const minutes = addZero(now.getMinutes())
+  const seconds = addZero(now.getSeconds())
+  const month = now.getMonth() + 1
+  const date = now.getDate()
+  const day = now.getDay()
+  const zeroDate = addZero(date)
+  return {
+    year,
+    hours,
+    minutes,
+    seconds,
+    month,
+    date,
+    zeroDate,
+    dayText: weeks[day],
+  } as const
+}
+
+export function getDefaultTheme() {
+  const t = isMobile() ? settings.appTheme : settings.theme
+  if (t === 'Current') {
+    return settings.theme
+  }
+  return t
 }

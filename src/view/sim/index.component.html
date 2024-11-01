@@ -1,21 +1,33 @@
 <div class="sim">
+  <nz-spin
+    nzSimple
+    *ngIf="commonService.sliceMax === 0"
+    class="position-center mt-2.5"
+  />
+
   <div
     class="wallpaper"
-    *ngIf="settings.simThemeImages.length > 0"
-    [class.bootstrap]="settings.simThemeHeight < 260"
+    *ngIf="commonService.settings.simThemeImages.length > 0"
+    [class.bootstrap]="commonService.settings.simThemeHeight < 260"
   >
     <app-swiper
-      [images]="settings.simThemeImages"
-      [autoplay]="settings.simThemeAutoplay"
-      [height]="settings.simThemeHeight"
+      [images]="commonService.settings.simThemeImages"
+      [autoplay]="commonService.settings.simThemeAutoplay"
+      [height]="commonService.settings.simThemeHeight"
     />
     <div class="bar">
       <h1 class="title dark-white">
-        {{ settings.simTitle || settings.title }}
+        {{ commonService.settings.simTitle || commonService.settings.title }}
       </h1>
-      <pre class="description dark-white" [innerHTML]="description"></pre>
-      <app-search-engine />
+      <pre
+        class="description dark-white"
+        [innerHTML]="description | safeHtml"
+      ></pre>
     </div>
+  </div>
+
+  <div class="sim-component">
+    <component-group></component-group>
   </div>
 
   <app-search-engine class="hidden search-sm" />
@@ -23,24 +35,24 @@
   <nav class="top-nav dark-border-color dark-scrollbar dark-bg">
     <span
       *ngFor="
-        let item of websiteList.slice(0, overIndex);
+        let item of commonService.websiteList.slice(0, commonService.overIndex);
         let i = index;
-        trackBy: trackByItem
+        trackBy: commonService.trackByItem
       "
-      [class.active]="page === i"
-      [class.dark-text-active]="page === i"
+      [class.active]="commonService.page === i"
+      [class.dark-text-active]="commonService.page === i"
       class="over-item dark-text"
-      (click)="handleCilckTopNav(i)"
+      (click)="commonService.handleCilckTopNav(i)"
     >
       {{ item.title }}
     </span>
     <!-- More -->
     <app-web-more-menu
-      *ngIf="overIndex < websiteList.length"
-      [data]="websiteList.slice(overIndex, 9999)"
-      [index]="overIndex"
-      [page]="page"
-      (onClick)="handleCilckTopNav($event)"
+      *ngIf="commonService.overIndex < commonService.websiteList.length"
+      [data]="commonService.websiteList.slice(commonService.overIndex, 99999)"
+      [index]="commonService.overIndex"
+      [page]="commonService.page"
+      (onClick)="commonService.handleCilckTopNav($event)"
     />
   </nav>
 
@@ -48,17 +60,17 @@
     <nav
       class="sidebar dark-bg"
       id="sidebar"
-      *ngIf="websiteList[page]?.nav?.length"
+      *ngIf="commonService.websiteList[commonService.page]?.nav?.length"
     >
       <div
         *ngFor="
-          let item of websiteList[page].nav;
+          let item of commonService.websiteList[commonService.page].nav;
           let i = index;
-          trackBy: trackByItem
+          trackBy: commonService.trackByItem
         "
-        (click)="handleSidebarNav(i)"
-        [class.active]="id === i"
-        [class.dark-item-active]="id === i"
+        (click)="commonService.handleSidebarNav(i)"
+        [class.active]="commonService.id === i"
+        [class.dark-item-active]="commonService.id === i"
         class="ripple-btn dark-text dark-hover"
       >
         {{ item.title }}
@@ -66,18 +78,23 @@
     </nav>
 
     <aside class="site-box dark-bg">
-      <div *ngIf="currentList.length > 0; else noData">
+      <app-search-engine class="max768none" />
+
+      <div *ngIf="commonService.currentList.length > 0; else noData">
         <div
           *ngFor="
-            let item of currentList.slice(0, sliceMax);
+            let item of commonService.currentList.slice(
+              0,
+              commonService.sliceMax
+            );
             let i = index;
-            trackBy: trackByItem
+            trackBy: commonService.trackByItem
           "
         >
           <div class="nav-wrapper">
             <app-toolbar-title
               [dataSource]="item"
-              (onCollapse)="onCollapse(item, i)"
+              (onCollapse)="commonService.onCollapse(item, i)"
               [index]="i"
             ></app-toolbar-title>
 
@@ -94,13 +111,17 @@
                 [nzMd]="12"
                 [nzLg]="8"
                 [nzXs]="24"
-                *ngFor="let el of item.nav; index as j; trackBy: trackByItemWeb"
+                *ngFor="
+                  let el of item.nav;
+                  index as j;
+                  trackBy: commonService.trackByItemWeb
+                "
               >
                 <app-card
-                  [cardStyle]="'example'"
+                  [cardStyle]="commonService.settings.simCardStyle"
                   [dataSource]="el"
-                  [indexs]="[page, id, i, j]"
-                  [searchKeyword]="searchKeyword"
+                  [indexs]="[commonService.page, commonService.id, i, j]"
+                  [searchKeyword]="commonService.searchKeyword"
                   class="column-border"
                 ></app-card>
               </div>
@@ -116,8 +137,13 @@
   </div>
 </div>
 
-<app-footer className="sim-footer"></app-footer>
-<app-fixbar (onCollapse)="onCollapseAll()" [collapsed]="collapsed()">
-</app-fixbar>
+<app-footer
+  className="sim-footer"
+  [content]="commonService.settings.simFooterHTML"
+/>
+<app-fixbar
+  (onCollapse)="commonService.onCollapseAll()"
+  [collapsed]="commonService.collapsed"
+/>
 
 <div class="sim-bg dark-bg"></div>

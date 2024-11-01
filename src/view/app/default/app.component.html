@@ -1,7 +1,7 @@
-<section class="app-page user-select-none">
+<section class="app-page select-none">
   <header class="header">
     <div class="header-top">
-      <img [src]="LOGO_CDN" class="logo" alt="logo" />
+      <img [src]="commonService.settings.favicon" class="logo" alt="logo" />
       <div class="open" [class.active]="open" (click)="handleToggleOpen()">
         <i></i>
         <i></i>
@@ -11,9 +11,13 @@
 
     <nav class="nav-open" [class.active]="open">
       <div
-        *ngFor="let item of websiteList; let i = index; trackBy: trackByItem"
+        *ngFor="
+          let item of commonService.websiteList;
+          let i = index;
+          trackBy: commonService.trackByItem
+        "
         (click)="handleCilckNav(i)"
-        [class.active]="page === i"
+        [class.active]="commonService.page === i"
         class="nav-title"
       >
         {{ item.title }}
@@ -23,65 +27,55 @@
 
   <app-search-engine />
 
-  <div class="wrapper" *ngIf="websiteList[page]">
-    <nav class="children-nav" *ngIf="websiteList[page]?.nav?.length">
+  <div class="wrapper" *ngIf="commonService.websiteList[commonService.page]">
+    <nav
+      class="children-nav"
+      *ngIf="commonService.websiteList[commonService.page]?.nav?.length"
+    >
       <span
         class="tag"
         *ngFor="
-          let item of websiteList[page].nav;
+          let item of commonService.websiteList[commonService.page].nav;
           let i = index;
-          trackBy: trackByItem
+          trackBy: commonService.trackByItem
         "
-        [class.active]="id === i"
-        (click)="handleSidebarNav(i)"
+        [class.active]="commonService.id === i"
+        (click)="commonService.handleSidebarNav(i)"
       >
         {{ item.title }}
       </span>
     </nav>
-    <div *ngFor="let item of currentList">
+    <div *ngFor="let item of commonService.currentList; index as i">
       <h2 class="block-title" *ngIf="item.title">
         {{ item.title }} x {{ item.nav.length }}
       </h2>
-      <div class="row">
-        <div
-          class="item-list"
-          *ngFor="let el of item.nav; index as i; trackBy: trackByItem"
-        >
-          <a [href]="el.url" target="_blank">
-            <div class="top">
-              <app-logo [src]="el.icon || ''" [name]="el.name" [size]="30">
-              </app-logo>
-              <div
-                class="name"
-                [title]="el.__name__ || el.name"
-                [innerHTML]="el.name"
-              ></div>
-            </div>
-            <pre
-              class="desc"
-              [title]="el.__desc__ || el.desc"
-              [innerHTML]="el.desc"
-            ></pre>
 
-            <div class="tagbox">
-              <div
-                class="tag-item"
-                *ngFor="let key of objectKeys(el.urls || {})"
-                [style]="
-                  'background-color: ' +
-                  ((tagMap[key] && tagMap[key].color) || '#1890ff')
-                "
-              >
-                <a
-                  [href]="el.urls?.[key] || 'javascript:void(0)'"
-                  [target]="
-                el.urls?.[key] ? '_blank' : ''
-              "
-                  >{{ tagMap[key] && tagMap[key].name }}</a
-                >
-              </div>
-            </div>
-          </a>
+      <div
+        style="padding: 0 10px"
+        nz-row
+        [nzGutter]="[16, 16]"
+        [style.display]="item.collapsed ? 'none' : ''"
+      >
+        <div
+          class="gutter-row"
+          nz-col
+          [nzSpan]="8"
+          [nzMd]="12"
+          [nzXl]="6"
+          [nzXs]="24"
+          *ngFor="
+            let el of item.nav;
+            index as j;
+            trackBy: commonService.trackByItemWeb
+          "
+        >
+          <app-card
+            [cardStyle]="commonService.settings.appCardStyle"
+            [dataSource]="el"
+            [indexs]="[commonService.page, commonService.id, i, j]"
+            [searchKeyword]="commonService.searchKeyword"
+            class="column-border"
+          ></app-card>
         </div>
       </div>
     </div>

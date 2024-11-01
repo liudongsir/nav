@@ -1,10 +1,9 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
+// See https://github.com/xjh22222228/nav
 
 import { Component } from '@angular/core'
-import { Router, ActivatedRoute } from '@angular/router'
-import { queryString, fuzzySearch, matchCurrentList } from 'src/utils'
-import { INavProps, INavThreeProp } from 'src/types'
-import { websiteList, settings, tagMap } from 'src/store'
+import { CommonService } from 'src/services/common'
 
 @Component({
   selector: 'app-home',
@@ -12,58 +11,18 @@ import { websiteList, settings, tagMap } from 'src/store'
   styleUrls: ['./app.component.scss'],
 })
 export default class WebpComponent {
-  objectKeys = Object.keys
-  websiteList: INavProps[] = websiteList
-  currentList: INavThreeProp[] = []
-  id: number = 0
-  page: number = 0
   open: boolean = false
-  LOGO_CDN = settings.favicon
-  tagMap = tagMap
 
-  constructor(private router: Router, private activatedRoute: ActivatedRoute) {}
+  constructor(public commonService: CommonService) {}
 
-  ngOnInit() {
-    this.activatedRoute.queryParams.subscribe(() => {
-      const { page, id, q } = queryString()
-      this.page = page
-      this.id = id
-      if (q) {
-        this.currentList = fuzzySearch(this.websiteList, q)
-      } else {
-        this.currentList = matchCurrentList()
-      }
-    })
-  }
-
-  handleSidebarNav(index: number) {
-    const { page } = queryString()
-    this.router.navigate(['/app'], {
-      queryParams: {
-        page,
-        id: index,
-      },
-    })
-  }
+  ngOnInit() {}
 
   handleCilckNav(index: number) {
-    this.router.navigate(['/app'], {
-      queryParams: {
-        page: index,
-      },
-    })
-    this.open = !this.open
+    this.commonService.handleCilckTopNav(index)
+    this.handleToggleOpen()
   }
 
   handleToggleOpen() {
     this.open = !this.open
-  }
-
-  trackByItem(a: any, item: any) {
-    return item.title
-  }
-
-  trackByItemWeb(a: any, item: any) {
-    return item.id
   }
 }

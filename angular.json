@@ -22,7 +22,9 @@
               "qs",
               "nprogress",
               "clipboard",
-              "file-saver"
+              "file-saver",
+              "localforage",
+              "dayjs"
             ],
             "outputPath": "dist",
             "index": "src/main.html",
@@ -30,7 +32,14 @@
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": ["src/favicon.ico", "src/_redirects", "src/assets"],
+            "assets": [
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "public",
+                "output": "/"
+              }
+            ],
             "styles": ["src/styles.scss"],
             "scripts": []
           },
@@ -40,7 +49,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "5mb",
-                  "maximumError": "5mb"
+                  "maximumError": "500mb"
                 },
                 {
                   "type": "anyComponentStyle",

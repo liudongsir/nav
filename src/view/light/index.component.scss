@@ -50,21 +50,24 @@
   }
 }
 
-
-
-
-
 .index-wrapper {
   display: flex;
   flex-direction: column;
   height: 100vh;
   padding-top: var(--top, 15px);
+  overflow: hidden;
   .light-box {
     display: flex;
     justify-content: center;
     height: 100%;
     margin: 0 auto;
     column-gap: 20px;
+    overflow: hidden;
+  }
+  .component-box {
+    width: 320px;
+    overflow: hidden;
+    overflow-y: auto;
   }
   .right {
     width: var(--rightWidth, 230px);
@@ -78,6 +81,7 @@
       border-radius: 4px;
     }
     .aditem {
+      position: relative;
       margin-bottom: 20px;
       border-radius: 4px;
       overflow: hidden;
@@ -139,7 +143,7 @@
   .sidebar {
     position: relative;
     width: $sidebarWidth;
-    height: 100%;
+    height: calc(100% - 25px);
     text-align: center;
     border-right: 1px solid #eee;
     overflow-y: auto;

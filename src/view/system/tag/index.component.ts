@@ -1,4 +1,5 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
 import { Component } from '@angular/core'
@@ -6,9 +7,10 @@ import { $t } from 'src/locale'
 import { NzMessageService } from 'ng-zorro-antd/message'
 import { NzModalService } from 'ng-zorro-antd/modal'
 import { ITagPropValues } from 'src/types'
-import { updateFileContent } from 'src/services'
+import { updateFileContent } from 'src/api'
 import { TAG_PATH } from 'src/constants'
 import { tagList } from 'src/store'
+import { isSelfDevelop } from 'src/utils/util'
 
 @Component({
   selector: 'system-tag',
@@ -17,9 +19,10 @@ import { tagList } from 'src/store'
 })
 export default class SystemTagComponent {
   $t = $t
+  isSelfDevelop = isSelfDevelop
   tagList: ITagPropValues[] = tagList
   submitting: boolean = false
-  incrementId = Math.max(...tagList.map((item) => item.id)) + 100
+  incrementId = Math.max(...tagList.map((item) => Number(item.id))) + 1
 
   constructor(
     private message: NzMessageService,
@@ -34,6 +37,10 @@ export default class SystemTagComponent {
   }
 
   handleAdd() {
+    const isEmpty = this.tagList.some((item) => !item.name.trim())
+    if (isEmpty) {
+      return
+    }
     this.incrementId += 1
     this.tagList.unshift({
       id: this.incrementId,
@@ -77,7 +84,7 @@ export default class SystemTagComponent {
       nzOnOk: () => {
         this.submitting = true
         updateFileContent({
-          message: 'Update Tag',
+          message: 'update tag',
           content: JSON.stringify(this.tagList),
           path: TAG_PATH,
         })

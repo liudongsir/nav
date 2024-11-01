@@ -1,6 +1,16 @@
-.container {
+.card-container {
   position: relative;
+  width: 100%;
   height: 100%;
+  ::ng-deep {
+    img {
+      max-width: 100%;
+      object-fit: cover;
+    }
+    iframe {
+      width: 100%;
+    }
+  }
   .breadcrumb1 {
     padding: 0 0 0 8px;
     font-size: 12px;
@@ -10,13 +20,14 @@
     }
   }
   .desc {
-    color: rgba(0, 0, 0, 0.45);
+    color: rgba(0, 0, 0, 0.5);
     word-break: break-all;
     white-space: pre-wrap;
   }
   .title {
     white-space: normal;
     word-break: break-all;
+    color: rgba(0, 0, 0, 0.8);
   }
   .stop-icon {
     z-index: 3;
@@ -26,6 +37,10 @@
     top: 12px;
     right: 12px;
   }
+}
+
+.progrcode {
+  cursor: pointer;
 }
 
 .standard {
@@ -38,6 +53,7 @@
   flex-direction: column;
   padding-top: 5px;
   transition: all 0.2s ease-out;
+  background-color: #fff;
   &:hover {
     transform: translate(0, -3px);
   }
@@ -46,6 +62,7 @@
   }
   .middle {
     flex: 1;
+    padding: 8px 8px 0;
   }
   .top {
     margin-top: 5px;
@@ -55,33 +72,12 @@
     .title {
       margin-left: $padding;
       font-weight: 500;
-      color: #000;
+      font-size: 15px;
     }
   }
   .desc {
-    padding: $padding $padding 0;
-    margin-bottom: 5px;
-  }
-  .tagbox {
-    display: flex;
-    padding: 0 $padding;
-    flex-wrap: wrap;
-  }
-  .tag-item {
-    margin: 6px 6px 0 0;
-    padding: 0 6px;
-    border-radius: 2px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    transition: all 0.1s linear;
-    color: #fff;
-    a {
-      color: currentColor;
-    }
-    &:hover {
-      opacity: 0.8;
-    }
+    padding-bottom: 5px;
+    font-size: 13px;
   }
   .actionbar {
     display: flex;
@@ -89,8 +85,8 @@
     padding: 8px 0;
     margin-top: 10px;
     .action-item {
+      justify-content: center;
       flex: 1;
-      text-align: center;
       font-size: 16px;
       color: #999;
       cursor: pointer;
@@ -121,6 +117,16 @@
       color: #007bff;
     }
   }
+  &.noDesc {
+    .title {
+      font-size: 16px;
+    }
+  }
+  .title {
+    width: 100%;
+    font-weight: 500;
+    line-height: 18px;
+  }
   .breadcrumb1 {
     padding: 0 0 4px 0;
   }
@@ -128,13 +134,56 @@
     display: flex;
   }
   .right-box {
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    flex-direction: column;
     flex: 1;
     width: 0;
     margin-left: 12px;
   }
   .desc {
+    width: 100%;
     margin: 0;
     font-size: 12px;
+  }
+}
+
+.original2 {
+  background-color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+  transition: all 0.15s linear;
+  color: #000;
+  display: block;
+  &:hover {
+    border: 1px solid #78b7fa;
+    transform: translateY(-3px);
+    .title {
+      color: #007bff;
+    }
+  }
+  .title {
+    width: 100%;
+    font-weight: 500;
+  }
+  .breadcrumb1 {
+    padding: 0 0 4px 0;
+  }
+  .wrapper {
+    display: flex;
+  }
+  .right-box {
+    display: flex;
+    align-items: start;
+    justify-content: center;
+    flex-direction: column;
+    flex: 1;
+    width: 0;
+    margin-left: 12px;
   }
 }
 
@@ -170,7 +219,7 @@
     margin-top: 6px;
   }
   .title {
-    font-weight: bold;
+    font-weight: 500;
     margin-left: 10px;
     font-size: 15px;
   }
@@ -180,37 +229,20 @@
   }
   .bottom-bar {
     display: flex;
-    margin-top: 4px;
-  }
-  .tagbox {
-    display: flex;
-    flex: 1;
-    justify-content: flex-start;
-    align-items: center;
     flex-wrap: wrap;
-    row-gap: 5px;
-    a {
-      color: #fff;
-    }
-  }
-  .tag-item {
-    margin-right: 6px;
-    padding: 0 6px;
-    border-radius: 2px;
-    font-size: 12px;
-    display: flex;
     align-items: center;
-    transition: all 0.1s linear;
-    &:hover {
-      opacity: 0.8;
-    }
+    margin-top: 4px;
   }
   .rate2 {
     color: #8a919f;
     margin-right: 10px;
   }
+  .actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 4px;
+  }
   .action-btn {
-    margin-right: 4px;
     color: #8a919f;
     font-size: 12px;
     display: none;
@@ -227,5 +259,41 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+  }
+}
+
+// retro
+.retro2 {
+  background-color: #fff;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  transition: transform 0.1s linear;
+  &:hover {
+    transform: translate(0, -3px);
+  }
+  .item-list {
+    z-index: 111;
+    position: relative;
+    overflow: hidden;
+  }
+  .title {
+    font-size: 14px;
+    margin-left: 4px;
+    font-weight: 500;
+  }
+
+  .desc {
+    word-break: break-all;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-size: 12px;
+    margin: 5px 0;
+  }
+
+  .top {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #eee;
   }
 }

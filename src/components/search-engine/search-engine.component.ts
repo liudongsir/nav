@@ -1,5 +1,5 @@
-// @ts-nocheck
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 
 import { Component, Input } from '@angular/core'
 import {
@@ -8,7 +8,7 @@ import {
   queryString,
 } from '../../utils'
 import { Router } from '@angular/router'
-import * as searchEngineList from '../../../data/search.json'
+import { searchEngineList } from 'src/store'
 import { ISearchEngineProps } from '../../types'
 import { SearchType } from './index'
 import { $t } from 'src/locale'
@@ -19,17 +19,20 @@ import { $t } from 'src/locale'
   styleUrls: ['./search-engine.component.scss'],
 })
 export class SearchEngineComponent {
-  @Input() size: any = 'default'
+  @Input() size: 'small' | 'default' | 'large' = 'default'
 
   $t = $t
-  searchEngineList: ISearchEngineProps[] = (searchEngineList as any).default
+  searchEngineList: ISearchEngineProps[] = searchEngineList
   currentEngine: ISearchEngineProps = getDefaultSearchEngine()
   SearchType = SearchType
   searchTypeValue = SearchType.All
-  showEngine = false
   keyword = queryString().q
 
   constructor(private router: Router) {}
+
+  get searchList() {
+    return this.searchEngineList.filter((item) => !item.blocked)
+  }
 
   inputFocus() {
     setTimeout(() => {
@@ -39,24 +42,11 @@ export class SearchEngineComponent {
 
   ngAfterViewInit() {
     this.inputFocus()
-
-    document.addEventListener('click', () => {
-      this.toggleEngine(null, false)
-    })
   }
 
-  toggleEngine(e?: Event, isShow?: boolean) {
-    if (this.searchEngineList.length <= 1) return
-
-    if (e) {
-      e.stopPropagation()
-    }
-    this.showEngine = typeof isShow === 'undefined' ? !this.showEngine : isShow
-  }
-
-  clickEngineItem(index) {
-    this.currentEngine = this.searchEngineList[index]
-    this.toggleEngine()
+  clickEngineItem(index: number) {
+    document.body.click()
+    this.currentEngine = this.searchList[index]
     this.inputFocus()
     setDefaultSearchEngine(this.currentEngine)
   }
@@ -64,6 +54,7 @@ export class SearchEngineComponent {
   triggerSearch() {
     if (this.currentEngine.url) {
       window.open(this.currentEngine.url + this.keyword)
+      return
     }
 
     const params = queryString()

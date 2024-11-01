@@ -1,13 +1,16 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
-import { Component, OnInit, Input } from '@angular/core'
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop'
-import { websiteList } from 'src/store'
-import { IWebProps, INavProps } from 'src/types'
-import { setWebsiteList, queryString, fuzzySearch } from 'src/utils'
+import { Component, Input } from '@angular/core'
+import { websiteList, settings } from 'src/store'
+import { IWebProps, INavProps, TopType } from 'src/types'
+import { queryString, fuzzySearch, isMobile, getDefaultTheme } from 'src/utils'
 import { isLogin } from 'src/utils/user'
-import { ActivatedRoute } from '@angular/router'
+import { ActivatedRoute, Router } from '@angular/router'
+import { CommonService } from 'src/services/common'
+import { JumpService } from 'src/services/jump'
+import event from 'src/utils/mitt'
 
 let DEFAULT_WEBSITE: Array<IWebProps> = []
 
@@ -16,39 +19,61 @@ let DEFAULT_WEBSITE: Array<IWebProps> = []
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
 })
-export class WebListComponent implements OnInit {
+export class WebListComponent {
+  @Input() type: 'dock' | '' = ''
+  @Input() dockCount = 4
+  @Input() size: 'large' | '' = ''
   @Input() max: number = 110
   @Input() search = true
+  @Input() overflow = false
 
   websiteList: INavProps[] = websiteList
   dataList: IWebProps[] = []
 
-  constructor(private activatedRoute: ActivatedRoute) {}
+  constructor(
+    private router: Router,
+    public jumpService: JumpService,
+    private activatedRoute: ActivatedRoute,
+    public commonService: CommonService
+  ) {}
 
   ngOnInit() {
-    this.getTopWeb()
+    const init = () => {
+      this.getTopWeb()
+      this.activatedRoute.queryParams.subscribe(() => {
+        const { q } = queryString()
 
-    this.activatedRoute.queryParams.subscribe(() => {
-      const { q } = queryString()
-      const result = fuzzySearch(this.websiteList, q)
-
-      if (this.search && q.trim()) {
-        if (result.length === 0) {
-          this.dataList = []
+        if (this.search && q.trim()) {
+          const result = fuzzySearch(this.websiteList, q)
+          if (result.length === 0) {
+            this.dataList = []
+          } else {
+            this.dataList = result[0].nav.slice(0, this.max)
+          }
         } else {
-          this.dataList = result[0].nav.slice(0, this.max)
+          this.dataList = DEFAULT_WEBSITE
         }
-      } else {
-        this.dataList = DEFAULT_WEBSITE
-      }
-      setWebsiteList(this.websiteList)
-    })
+      })
+    }
+    if (window.__FINISHED__) {
+      init()
+    } else {
+      event.on('WEB_FINISH', () => {
+        init()
+      })
+    }
   }
 
   // 获取置顶WEB
   getTopWeb() {
+    let path = this.router.url.split('?')[0].replace('/', '')
+    if (!path) {
+      path = getDefaultTheme()
+    }
+    path = path[0].toUpperCase() + path.slice(1)
     const dataList: IWebProps[] = []
     const max = this.max
+    let dockList: IWebProps[] = []
 
     function r(nav: any) {
       if (!Array.isArray(nav)) return
@@ -61,7 +86,12 @@ export class WebListComponent implements OnInit {
         const item = nav[i]
         if (item.url) {
           if (item.top && (isLogin || !item.ownVisible)) {
-            dataList.push(item)
+            const isMatch = (item.topTypes || []).some(
+              (v: number) => path === TopType[v]
+            )
+            if (isMatch) {
+              dataList.push(item)
+            }
           }
         } else {
           r(item.nav)
@@ -71,44 +101,17 @@ export class WebListComponent implements OnInit {
     r(websiteList)
 
     // @ts-ignore
-    this.dataList = dataList.sort((a, b) => a.index - b.index)
+    this.dataList = dataList.sort((a: any, b: any) => {
+      const aIdx = a.index == null || a.index === '' ? 100000 : Number(a.index)
+      const bIdx = b.index == null || b.index === '' ? 100000 : Number(b.index)
+      return aIdx - bIdx
+    })
+    if (this.type === 'dock') {
+      const dockCount = isMobile() ? 5 : this.dockCount
+      dockList = this.dataList.slice(0, dockCount)
+      event.emit('DOCK_LIST', dockList)
+      this.dataList = this.dataList.slice(dockCount)
+    }
     DEFAULT_WEBSITE = this.dataList
-  }
-
-  handleDrop(event: CdkDragDrop<string[]>): void {
-    moveItemInArray(this.dataList, event.previousIndex, event.currentIndex)
-
-    const m: Record<string, any> = {}
-
-    for (let i = 1; i <= this.dataList.length; i++) {
-      const item = this.dataList[i - 1]
-      m[`${item.name}${item.url}`] = i
-    }
-
-    function r(nav: any) {
-      if (!Array.isArray(nav)) return
-
-      for (let i = 0; i < nav.length; i++) {
-        const item = nav[i]
-        if (item.url) {
-          const k = `${item.name}${item.url}`
-          if (m[k]) {
-            item.index = m[k]
-          }
-        } else {
-          r(item.nav)
-        }
-      }
-    }
-    r(websiteList)
-    setWebsiteList(websiteList)
-  }
-
-  goUrl(url: string) {
-    window.open(url)
-  }
-
-  trackByItemWeb(a: any, item: any) {
-    return item.id
   }
 }

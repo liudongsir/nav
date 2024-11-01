@@ -1,5 +1,6 @@
 <div class="admin">
   <button
+    *ngIf="!isSelfDevelop"
     nz-button
     nzType="primary"
     (click)="handleSync()"
@@ -7,17 +8,26 @@
   >
     {{ $t('_save') }}
   </button>
-  <button nz-button style="margin: 0 15px 20px 15px" (click)="handleReset()">
+  <button
+    *ngIf="!isSelfDevelop"
+    nz-button
+    style="margin: 0 15px 20px 15px"
+    (click)="handleReset()"
+  >
     {{ $t('_resetInitData') }}
   </button>
   <button nz-button (click)="handleDownloadBackup()" style="margin-right: 15px">
     {{ $t('_backup') }}
   </button>
 
-  <label id="file2">
-    <button nz-button nz-tooltip [nzTooltipTitle]="$t('_importBackupTip')">
-      {{ $t('_importBackup') }}
-    </button>
+  <label
+    id="file2"
+    nz-button
+    nz-tooltip
+    nzTooltipPlacement="bottom"
+    [nzTooltipTitle]="$t('_importBackupTip')"
+  >
+    {{ $t('_importBackup') }}
     <input
       type="file"
       name="file2"
@@ -28,12 +38,9 @@
   </label>
 
   <div class="tip2">
-    {{ $t('_dragSort') }}；
-    <span
-      >上次检测出
-      {{ settings.errorUrlCount || 0 }}
-      个网站链接失效，具体到管理网站查看，如需再次检测状态直接点保存触发事件即可。</span
-    >
+    上次检测出
+    {{ settings.errorUrlCount || 0 }}
+    个网站链接失效，具体到管理网站查看，如需再次检测状态直接点保存触发事件即可。
   </div>
 
   <nz-tabset
@@ -45,21 +52,18 @@
       <button nz-button nzType="primary" (click)="toggleCreateModal()">
         {{ $t('_addTag') }}
       </button>
-      <a
+      <button
         nz-popconfirm
         [nzPopconfirmTitle]="$t('_confirmDel')"
         nzPopconfirmPlacement="bottom"
         (nzOnConfirm)="onBatchDelete(1)"
+        nz-button
+        nzDanger
+        class="ml-2.5"
+        [disabled]="setOfCheckedId.size <= 0"
       >
-        <button
-          nz-button
-          nzDanger
-          class="ml10"
-          [disabled]="setOfCheckedId.size <= 0"
-        >
-          {{ $t('_batchDel') }}
-        </button>
-      </a>
+        {{ $t('_batchDel') }}
+      </button>
 
       <nz-table
         #rowSelectionTable
@@ -81,14 +85,14 @@
             <th>{{ $t('_action') }}</th>
           </tr>
         </thead>
-        <tbody cdkDropList (cdkDropListDropped)="dropOne($event)">
-          <tr *ngFor="let data of websiteList; let idx = index" cdkDrag>
+        <tbody>
+          <tr *ngFor="let data of websiteList; let idx = index">
             <td
               [nzChecked]="setOfCheckedId.has(data.title)"
               (nzCheckedChange)="onItemChecked(data.title, $event)"
             ></td>
             <td>
-              <app-logo [src]="data.icon || ''" [name]="data.title"> </app-logo>
+              <app-logo [src]="data.icon || ''" [name]="data.title" />
             </td>
             <td>{{ data.title }}</td>
             <td>
@@ -100,15 +104,22 @@
               ></i>
             </td>
             <td>{{ data.createdAt }}</td>
-            <td>
-              <a (click)="handleEditBtn(data, idx)">{{ $t('_edit') }}</a>
+            <td class="select-none">
+              <a (click)="moveOneUp(idx)">{{ $t('_moveUp') }}</a>
+              <a (click)="moveOneDown(idx)" class="ml-2.5">{{
+                $t('_moveDown')
+              }}</a>
+              <a (click)="handleEditBtn(data, idx)" class="ml-2.5">{{
+                $t('_edit')
+              }}</a>
               <a
                 nz-popconfirm
                 [nzPopconfirmTitle]="$t('_delWarn')"
                 nzPopconfirmPlacement="bottom"
                 (nzOnConfirm)="handleConfirmDelOne(idx)"
+                class="color-red ml-2.5"
               >
-                <a nz-button nzType="link" nzDanger>{{ $t('_del') }}</a>
+                {{ $t('_del') }}
               </a>
             </td>
           </tr>
@@ -140,21 +151,18 @@
       >
         {{ $t('_addTag') }}
       </button>
-      <a
+      <button
         nz-popconfirm
         [nzPopconfirmTitle]="$t('_confirmDel')"
         nzPopconfirmPlacement="bottom"
         (nzOnConfirm)="onBatchDelete(2)"
+        nz-button
+        nzDanger
+        class="ml-2.5"
+        [disabled]="setOfCheckedId.size <= 0"
       >
-        <button
-          nz-button
-          nzDanger
-          class="ml10"
-          [disabled]="setOfCheckedId.size <= 0"
-        >
-          {{ $t('_batchDel') }}
-        </button>
-      </a>
+        {{ $t('_batchDel') }}
+      </button>
 
       <nz-table
         #rowSelectionTable
@@ -176,15 +184,14 @@
             <th>{{ $t('_action') }}</th>
           </tr>
         </thead>
-        <tbody cdkDropList (cdkDropListDropped)="dropTwo($event)">
-          <tr *ngFor="let data of twoTableData; let idx = index" cdkDrag>
+        <tbody>
+          <tr *ngFor="let data of twoTableData; let idx = index">
             <td
               [nzChecked]="setOfCheckedId.has(data.title || '')"
               (nzCheckedChange)="onItemChecked(data.title, $event)"
             ></td>
             <td>
-              <app-logo [src]="data.icon || ''" [name]="data.title || ''">
-              </app-logo>
+              <app-logo [src]="data.icon || ''" [name]="data.title || ''" />
             </td>
             <td>{{ data.title }}</td>
             <td>
@@ -196,9 +203,15 @@
               ></i>
             </td>
             <td>{{ data.createdAt }}</td>
-            <td>
-              <a (click)="handleEditBtn(data, idx)">{{ $t('_edit') }}</a>
-              <a (click)="openMoveWebModal(data, idx, 2)" class="ml10">{{
+            <td class="select-none">
+              <a (click)="moveTwoUp(idx)">{{ $t('_moveUp') }}</a>
+              <a (click)="moveTwoDown(idx)" class="ml-2.5">{{
+                $t('_moveDown')
+              }}</a>
+              <a (click)="handleEditBtn(data, idx)" class="ml-2.5">{{
+                $t('_edit')
+              }}</a>
+              <a (click)="openMoveWebModal(data, idx, 2)" class="ml-2.5">{{
                 $t('_move')
               }}</a>
               <a
@@ -206,8 +219,9 @@
                 [nzPopconfirmTitle]="$t('_delWarn')"
                 nzPopconfirmPlacement="bottom"
                 (nzOnConfirm)="handleConfirmDelTwo(idx)"
+                class="color-red ml-2.5"
               >
-                <a nz-button nzType="link" nzDanger>{{ $t('_del') }}</a>
+                {{ $t('_del') }}
               </a>
             </td>
           </tr>
@@ -254,21 +268,18 @@
       >
         {{ $t('_addTag') }}
       </button>
-      <a
+      <button
         nz-popconfirm
         [nzPopconfirmTitle]="$t('_confirmDel')"
         nzPopconfirmPlacement="bottom"
         (nzOnConfirm)="onBatchDelete(3)"
+        nz-button
+        nzDanger
+        class="ml-2.5"
+        [disabled]="setOfCheckedId.size <= 0"
       >
-        <button
-          nz-button
-          nzDanger
-          class="ml10"
-          [disabled]="setOfCheckedId.size <= 0"
-        >
-          {{ $t('_batchDel') }}
-        </button>
-      </a>
+        {{ $t('_batchDel') }}
+      </button>
 
       <nz-table
         #rowSelectionTable
@@ -290,15 +301,14 @@
             <th>{{ $t('_action') }}</th>
           </tr>
         </thead>
-        <tbody cdkDropList (cdkDropListDropped)="dropThree($event)">
-          <tr *ngFor="let data of threeTableData; let idx = index" cdkDrag>
+        <tbody>
+          <tr *ngFor="let data of threeTableData; let idx = index">
             <td
               [nzChecked]="setOfCheckedId.has(data.title || '')"
               (nzCheckedChange)="onItemChecked(data.title, $event)"
             ></td>
             <td>
-              <app-logo [src]="data.icon || ''" [name]="data.title || ''">
-              </app-logo>
+              <app-logo [src]="data.icon || ''" [name]="data.title || ''" />
             </td>
             <td>{{ data.title }}</td>
             <td>
@@ -310,9 +320,15 @@
               ></i>
             </td>
             <td>{{ data.createdAt }}</td>
-            <td>
-              <a (click)="handleEditBtn(data, idx)">{{ $t('_edit') }}</a>
-              <a (click)="openMoveWebModal(data, idx, 3)" class="ml10">{{
+            <td class="select-none">
+              <a (click)="moveThreeUp(idx)">{{ $t('_moveUp') }}</a>
+              <a (click)="moveThreeDown(idx)" class="ml-2.5">{{
+                $t('_moveDown')
+              }}</a>
+              <a (click)="handleEditBtn(data, idx)" class="ml-2.5">{{
+                $t('_edit')
+              }}</a>
+              <a (click)="openMoveWebModal(data, idx, 3)" class="ml-2.5">{{
                 $t('_move')
               }}</a>
               <a
@@ -320,8 +336,9 @@
                 [nzPopconfirmTitle]="$t('_delWarn')"
                 nzPopconfirmPlacement="bottom"
                 (nzOnConfirm)="handleConfirmDelThree(idx)"
+                class="color-red ml-2.5"
               >
-                <a nz-button nzType="link" nzDanger>{{ $t('_del') }}</a>
+                {{ $t('_del') }}
               </a>
             </td>
           </tr>
@@ -329,7 +346,7 @@
       </nz-table>
     </nz-tab>
 
-    <nz-tab [nzTitle]="$t('_mgrWeb')">
+    <nz-tab [nzTitle]="$t('_mgrWeb') + '（' + internal.loginViewCount + '）'">
       <nz-select
         [ngModel]="oneSelect"
         nzShowSearch
@@ -381,7 +398,7 @@
         (click)="openCreateWebModal()"
         style="margin-left: 20px"
       >
-        {{ $t('_addWeb') }}
+        {{ $t('_addWeb') }}（{{ websiteTableData.length }}）
       </button>
       <button
         nz-button
@@ -391,21 +408,18 @@
       >
         检索所有异常网站
       </button>
-      <a
+      <button
         nz-popconfirm
         [nzPopconfirmTitle]="$t('_confirmDel')"
         nzPopconfirmPlacement="bottom"
         (nzOnConfirm)="onBatchDelete(4)"
+        nz-button
+        nzDanger
+        class="ml-2.5"
+        [disabled]="setOfCheckedId.size <= 0"
       >
-        <button
-          nz-button
-          nzDanger
-          class="ml10"
-          [disabled]="setOfCheckedId.size <= 0"
-        >
-          {{ $t('_batchDel') }}
-        </button>
-      </a>
+        {{ $t('_batchDel') }}
+      </button>
 
       <nz-table
         #rowSelectionTable
@@ -421,7 +435,7 @@
               [nzChecked]="checkedAll"
               (nzCheckedChange)="onAllChecked($event, 4)"
             ></th>
-            <th nzWidth="60px" class="center">{{ $t('_action') }}</th>
+            <th nzWidth="60px" class="text-center">{{ $t('_action') }}</th>
             <th nzWidth="70px">状态</th>
             <th nzWidth="80px">{{ $t('_icon') }}</th>
             <th nzWidth="100px">{{ $t('_webName') }}</th>
@@ -432,15 +446,21 @@
             <th>{{ $t('_createAt') }}</th>
           </tr>
         </thead>
-        <tbody cdkDropList (cdkDropListDropped)="dropWebsite($event)">
-          <tr *ngFor="let data of websiteTableData; let idx = index" cdkDrag>
+        <tbody>
+          <tr *ngFor="let data of websiteTableData; let idx = index">
             <td
               [nzChecked]="setOfCheckedId.has(data.name)"
               (nzCheckedChange)="onItemChecked(data.name, $event)"
             ></td>
-            <td class="center">
+            <td class="text-center select-none">
+              <div *ngIf="errorWebs.length <= 0">
+                <a (click)="moveWebUp(idx)">{{ $t('_moveUp') }}</a>
+              </div>
+              <div *ngIf="errorWebs.length <= 0">
+                <a (click)="moveWebDown(idx)">{{ $t('_moveDown') }}</a>
+              </div>
               <a (click)="openEditModal(data)">{{ $t('_edit') }}</a>
-              <div>
+              <div *ngIf="errorWebs.length <= 0">
                 <a (click)="openMoveWebModal(data, idx)">{{ $t('_move') }}</a>
               </div>
               <a
@@ -448,8 +468,9 @@
                 [nzPopconfirmTitle]="$t('_confirmDel')"
                 nzPopconfirmPlacement="bottom"
                 (nzOnConfirm)="handleConfirmDelWebsite(data, idx)"
+                class="color-red"
               >
-                <a nz-button nzType="link" nzDanger>{{ $t('_del') }}</a>
+                {{ $t('_del') }}
               </a>
             </td>
             <td>
@@ -462,24 +483,17 @@
               ></span>
             </td>
             <td>
-              <app-logo *ngIf="data.icon" [src]="data.icon" [name]="data.name">
-              </app-logo>
+              <app-logo
+                *ngIf="data.icon"
+                [src]="data.icon"
+                [name]="data.name"
+              />
             </td>
             <td>
               <a [href]="data.url" target="_blank">{{ data.name }}</a>
             </td>
             <td>
-              <nz-tag
-                *ngFor="let key of objectKeys(data.urls || {})"
-                [nzColor]="(tagMap[key] && tagMap[key].color) || '#1890ff'"
-                style="margin-bottom: 5px"
-              >
-                <a
-                  [href]="data.urls?.[key] || 'javascript:void(0)'"
-                  [target]="data.urls?.[key] ? '_blank' : ''"
-                  >{{ tagMap[key] && tagMap[key].name }}</a
-                >
-              </nz-tag>
+              <tag-list [data]="data.tags" *ngIf="data.tags" />
             </td>
             <td>
               <i
@@ -533,13 +547,20 @@
       <nz-form-item>
         <nz-form-label [nzSpan]="6">图标地址</nz-form-label>
         <nz-form-control [nzSpan]="18">
-          <nz-input-group>
+          <nz-input-group [nzPrefix]="prefixIcon" [nzSuffix]="suffixIconSearch">
             <input
               formControlName="icon"
               nz-input
               placeholder="用于某些主题icon"
             />
           </nz-input-group>
+
+          <ng-template #prefixIcon>
+            <app-logo [src]="iconUrl" [size]="25" *ngIf="iconUrl" />
+          </ng-template>
+          <ng-template #suffixIconSearch>
+            <app-upload (onChange)="onChangeFile($event)"></app-upload>
+          </ng-template>
         </nz-form-control>
       </nz-form-item>
     </form>

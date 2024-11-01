@@ -1,31 +1,29 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 
 import axios from 'axios'
 import NProgress from 'nprogress'
-import { getToken, getAuthCode } from '../utils/user'
-import config from '../../nav.config'
+import config from '../../nav.config.json'
 import event from './mitt'
-
-const DEFAULT_TITLE = document.title
-const headers: Record<string, string> = {}
+import { settings } from 'src/store'
+import { getToken, getAuthCode } from '../utils/user'
+import { isLogin } from 'src/utils/user'
 
 const httpInstance = axios.create({
   timeout: 60000 * 3,
   baseURL:
-    config.provider === 'Gitee'
+    config.address ||
+    (config.gitRepoUrl.includes('gitee.com')
       ? 'https://gitee.com/api/v5'
-      : 'https://api.github.com',
-  headers,
+      : 'https://api.github.com'),
 })
 
 function startLoad() {
   NProgress.start()
-  document.title = 'Connecting...'
 }
 
 function stopLoad() {
   NProgress.done()
-  document.title = DEFAULT_TITLE
 }
 
 httpInstance.interceptors.request.use(
@@ -63,25 +61,30 @@ httpInstance.interceptors.response.use(
 )
 
 const httpNavInstance = axios.create({
-  timeout: 10000,
-  baseURL: 'https://nav-server.netlify.app',
-  // baseURL: 'http://localhost:3000',
+  timeout: 15000,
+  baseURL: 'https://api.nav3.cn',
+  // baseURL: 'http://localhost:3007',
 })
 
 httpNavInstance.interceptors.request.use(
-  function (config) {
+  function (conf) {
     const code = getAuthCode()
     if (code) {
-      config.headers['Authorization'] = code
+      conf.headers['Authorization'] = code
     }
-    config.data = {
+    conf.data = {
       code,
-      hostname: window.location.hostname,
-      ...config.data,
+      hostname: location.hostname,
+      href: location.href,
+      isLogin,
+      ...config,
+      ...conf.data,
+      email: settings.email,
+      language: settings.language,
     }
     startLoad()
 
-    return config
+    return conf
   },
   function (error) {
     stopLoad()
@@ -91,12 +94,6 @@ httpNavInstance.interceptors.request.use(
 
 httpNavInstance.interceptors.response.use(
   function (res) {
-    if (res.data?.success === false) {
-      event.emit('MESSAGE', {
-        type: 'error',
-        content: res.data.message,
-      })
-    }
     stopLoad()
     return res
   },

@@ -16,8 +16,8 @@
   {{ $t('_save') }}
 </button>
 
-<div class="mb12">
-  <b>{{ $t('_buildTip') }}</b>
+<div class="mb-4 color-red font-bold" *ngIf="!isSelfDevelop">
+  {{ $t('_buildTip') }}
 </div>
 
 <nz-table #basicTable [nzData]="tagList">
@@ -54,18 +54,17 @@
         />
       </td>
       <td>
-        <div *ngIf="!data.isInner">
-          <a
-            nz-popconfirm
-            nzPopconfirmPlacement="rightTop"
-            nzOkType="danger"
-            [nzPopconfirmTitle]="$t('_confirmDel')"
-            nzPopconfirmPlacement="bottom"
-            (nzOnConfirm)="handleDelete(idx)"
-          >
-            <a>{{ $t('_del') }}</a>
-          </a>
-        </div>
+        <a
+          *ngIf="!data.isInner"
+          nz-popconfirm
+          nzOkType="danger"
+          [nzPopconfirmTitle]="$t('_confirmDel')"
+          nzPopconfirmPlacement="bottom"
+          (nzOnConfirm)="handleDelete(idx)"
+          class="color-red"
+        >
+          {{ $t('_del') }}
+        </a>
       </td>
     </tr>
   </tbody>

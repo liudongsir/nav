@@ -1,17 +1,22 @@
-// Copyright @ 2018-present xiejiahe. All rights reserved. MIT license.
+// 开源项目，未经作者同意，不得以抄袭/复制代码/修改源代码版权信息。
+// Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
 import { Component } from '@angular/core'
-import { Router, ActivatedRoute } from '@angular/router'
-import { queryString, setLocation } from '../utils'
+import { Router, ActivatedRoute, NavigationEnd } from '@angular/router'
+import { queryString, setLocation, isMobile, getDefaultTheme } from '../utils'
 import { en_US, NzI18nService, zh_CN } from 'ng-zorro-antd/i18n'
 import { getLocale } from 'src/locale'
 import { settings } from 'src/store'
-import { verifyToken } from 'src/services'
+import { verifyToken, getContentes } from 'src/api'
 import { getToken, userLogout, isLogin } from 'src/utils/user'
 import { NzMessageService } from 'ng-zorro-antd/message'
 import { NzNotificationService } from 'ng-zorro-antd/notification'
+import { fetchWeb } from 'src/utils/web'
+import { isSelfDevelop } from 'src/utils/util'
+import { routes } from './app-routing.module'
 import Alert from './alert-event'
+import event from 'src/utils/mitt'
 
 @Component({
   selector: 'app-xiejiahe',
@@ -20,6 +25,7 @@ import Alert from './alert-event'
 })
 export class AppComponent {
   isLogin: boolean = isLogin
+  fetchIng = true
 
   constructor(
     private router: Router,
@@ -29,6 +35,19 @@ export class AppComponent {
     private notification: NzNotificationService
   ) {
     new Alert(message, notification)
+
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.updateDocumentTitle()
+      }
+    })
+  }
+
+  updateDocumentTitle() {
+    const url = this.router.url.split('?')[0].slice(1)
+    const theme = (url === '' ? settings.theme : url).toLowerCase()
+    const title = settings[`${theme}DocTitle`]
+    document.title = title || window.__TITLE__ || settings.title
   }
 
   ngOnInit() {
@@ -43,18 +62,56 @@ export class AppComponent {
 
     const token = getToken()
     if (token) {
-      verifyToken(token).catch(() => {
-        userLogout()
-        setTimeout(() => {
-          location.reload()
-        }, 3000)
+      verifyToken(token)
+        .then((res) => {
+          const data = res.data || {}
+          if (!settings.email && data.email) {
+            settings.email = data.email
+          }
+          event.emit('GITHUB_USER_INFO', data)
+        })
+        .catch(() => {
+          userLogout()
+          setTimeout(() => {
+            location.reload()
+          }, 1000)
+        })
+    }
+
+    if (isSelfDevelop) {
+      getContentes().then(() => {
+        // 处理默认主题
+        const currentRoutes = this.router.config
+        const defaultTheme = getDefaultTheme().toLowerCase()
+        const hasDefault = routes.find((item) => item.path === defaultTheme)
+        const isHome = this.router.url.split('?')[0] === '/'
+        if (hasDefault) {
+          this.router.resetConfig([
+            ...currentRoutes,
+            {
+              ...hasDefault,
+              path: '**',
+            },
+          ])
+        }
+        if (isHome) {
+          this.router.navigate([defaultTheme])
+        }
+        this.updateDocumentTitle()
+        this.fetchIng = false
+        event.emit('WEB_FINISH')
+        window.__FINISHED__ = true
+      })
+    } else {
+      fetchWeb().finally(() => {
+        this.fetchIng = false
       })
     }
   }
 
   goRoute() {
     // is App
-    if (settings.appTheme !== 'Current' && 'ontouchstart' in window) {
+    if (settings.appTheme !== 'Current' && isMobile()) {
       const url = (this.router.url.split('?')[0] || '').toLowerCase()
       const { page, id, q } = queryString()
       const queryParams = { page, id, q }
