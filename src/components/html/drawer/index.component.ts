@@ -3,10 +3,28 @@
 // See https://github.com/xjh22222228/nav
 
 import { Component, EventEmitter, Output } from '@angular/core'
+import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { $t } from 'src/locale'
 import { FormBuilder, FormGroup } from '@angular/forms'
+import { NzDrawerModule } from 'ng-zorro-antd/drawer'
+import { NzFormModule } from 'ng-zorro-antd/form'
+import { NzButtonModule } from 'ng-zorro-antd/button'
+import { NzInputModule } from 'ng-zorro-antd/input'
+import { NzSliderModule } from 'ng-zorro-antd/slider'
+import { NzColorPickerModule } from 'ng-zorro-antd/color-picker'
 
 @Component({
+  standalone: true,
+  imports: [
+    FormsModule,
+    ReactiveFormsModule,
+    NzDrawerModule,
+    NzFormModule,
+    NzButtonModule,
+    NzInputModule,
+    NzSliderModule,
+    NzColorPickerModule,
+  ],
   selector: 'html-drawer',
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
@@ -14,7 +32,7 @@ import { FormBuilder, FormGroup } from '@angular/forms'
 export class HTMLDrawerComponent {
   @Output() ok = new EventEmitter<void>()
 
-  $t = $t
+  readonly $t = $t
   visible = false
   validateForm!: FormGroup
   index = 0
@@ -22,6 +40,8 @@ export class HTMLDrawerComponent {
   constructor(private fb: FormBuilder) {
     this.validateForm = this.fb.group({
       html: [''],
+      width: [0],
+      bgColor: [''],
     })
   }
 

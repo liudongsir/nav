@@ -3,31 +3,33 @@
 // See https://github.com/xjh22222228/nav
 
 import { Component, Input } from '@angular/core'
-import { IComponentProps } from 'src/types'
+import { CommonModule } from '@angular/common'
+import type { IComponentItemProps } from 'src/types'
+import { $t } from 'src/locale'
 import dayjs from 'dayjs'
-import event from 'src/utils/mitt'
+import { component } from 'src/store'
 
 @Component({
+  standalone: true,
+  imports: [CommonModule],
   selector: 'app-holiday',
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
 })
 export class HolidayComponent {
-  @Input() data!: IComponentProps
+  @Input() data!: IComponentItemProps
   items: any[] = []
+
+  readonly component = component
+  readonly $t = $t
 
   constructor() {}
 
-  ngOnInit() {
+  ngOnChanges() {
     this.init()
-    event.on('COMPONENT_OK', () => {
-      setTimeout(() => {
-        this.init()
-      }, 100)
-    })
   }
 
-  init() {
+  private init() {
     let items: any = {}
     const now = dayjs(dayjs().format('YYYY-MM-DD'))
     if (this.data['items']) {

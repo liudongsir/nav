@@ -3,20 +3,25 @@
 // See https://github.com/xjh22222228/nav
 
 import { Component, Input } from '@angular/core'
-import { IComponentProps } from 'src/types'
-import event from 'src/utils/mitt'
+import { CommonModule } from '@angular/common'
+import type { IComponentItemProps } from 'src/types'
+import { $t } from 'src/locale'
+import { component } from 'src/store'
 
 @Component({
+  standalone: true,
+  imports: [CommonModule],
   selector: 'app-offwork',
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
 })
 export class OffWorkComponent {
-  @Input() data!: IComponentProps
+  @Input() data!: IComponentItemProps
 
+  readonly component = component
+  private timer: any
   countdownStr = ''
   isRest = false
-  timer: any
 
   constructor() {
     document.addEventListener(
@@ -25,14 +30,9 @@ export class OffWorkComponent {
     )
   }
 
-  ngOnInit() {
+  ngOnChanges() {
+    clearTimeout(this.timer)
     this.init()
-    event.on('COMPONENT_OK', () => {
-      clearTimeout(this.timer)
-      setTimeout(() => {
-        this.init()
-      }, 100)
-    })
   }
 
   ngOnDestroy() {
@@ -40,7 +40,7 @@ export class OffWorkComponent {
     document.removeEventListener('visibilitychange', this.visibilitychange)
   }
 
-  visibilitychange(e: any) {
+  private visibilitychange(e: any) {
     if (e.target.hidden) {
       clearTimeout(this.timer)
     } else {
@@ -48,16 +48,16 @@ export class OffWorkComponent {
     }
   }
 
-  init() {
+  private init() {
     if (this.data) {
       const now = new Date()
       const nowTime = now.getTime()
-      const startDate = new Date(this.data['startDate'])
+      const startDate = new Date(this.data['startDate'] as number)
       startDate.setFullYear(now.getFullYear())
       startDate.setMonth(now.getMonth())
       startDate.setDate(now.getDate())
       const startTime = startDate.getTime()
-      const date = new Date(this.data['date'])
+      const date = new Date(this.data['date'] as number)
       date.setFullYear(now.getFullYear())
       date.setMonth(now.getMonth())
       date.setDate(now.getDate())
@@ -71,11 +71,11 @@ export class OffWorkComponent {
 
       if (nowTime >= startTime && nowTime <= dateTime) {
         if (hoursDecimal >= 1) {
-          this.countdownStr = `${hoursDecimal}小时`
+          this.countdownStr = $t('_hours', { num: hoursDecimal })
         } else if (minutes > 0) {
-          this.countdownStr = `${minutes}分钟`
+          this.countdownStr = $t('_minutes', { num: minutes })
         } else if (seconds >= 0) {
-          this.countdownStr = `${seconds}秒`
+          this.countdownStr = $t('_seconds', { num: seconds })
         }
       } else {
         this.isRest = true

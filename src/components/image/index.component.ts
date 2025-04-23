@@ -2,18 +2,21 @@
 // Copyright @ 2018-present xiejiahe. All rights reserved.
 // See https://github.com/xjh22222228/nav
 
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core'
-import { IComponentProps } from 'src/types'
+import { Component, Input } from '@angular/core'
+import type { IComponentItemProps } from 'src/types'
 import { JumpService } from 'src/services/jump'
+import { component } from 'src/store'
 
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
   selector: 'app-image',
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
 })
 export class ImageComponent {
-  @Input() data!: IComponentProps
+  @Input() data!: IComponentItemProps
+
+  readonly component = component
 
   constructor(public jumpService: JumpService) {}
 }

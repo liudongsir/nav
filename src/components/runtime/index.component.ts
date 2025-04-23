@@ -4,16 +4,20 @@
 
 import { Component, Input } from '@angular/core'
 import { settings } from 'src/store'
-import { IComponentProps } from 'src/types'
+import type { IComponentItemProps } from 'src/types'
+import { $t } from 'src/locale'
+import { component } from 'src/store'
 
 @Component({
+  standalone: true,
   selector: 'app-runtime',
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
 })
 export class RuntimeComponent {
-  @Input() data!: IComponentProps
+  @Input() data!: IComponentItemProps
 
+  readonly component = component
   runDays = 0
   unit = ''
 
@@ -23,10 +27,10 @@ export class RuntimeComponent {
     const diffYear = Math.floor(now / (1000 * 60 * 60 * 24 * 365))
     if (diffYear > 0) {
       this.runDays = diffYear
-      this.unit = '年'
+      this.unit = $t('_year')
     } else {
       this.runDays = Math.floor(now / (1000 * 60 * 60 * 24))
-      this.unit = '天'
+      this.unit = $t('_day')
     }
   }
 }

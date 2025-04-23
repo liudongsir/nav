@@ -3,11 +3,16 @@
 // See https://github.com/xjh22222228/nav
 
 import { Component, EventEmitter, Output } from '@angular/core'
+import { CommonModule } from '@angular/common'
 import { $t } from 'src/locale'
 import { NzMessageService } from 'ng-zorro-antd/message'
-import { createFile, getCDN, imageBranch } from 'src/api'
+import { createImageFile, getCDN, getImageRepo } from 'src/api'
+import { NzIconModule } from 'ng-zorro-antd/icon'
+import { isSelfDevelop } from 'src/utils/utils'
 
 @Component({
+  standalone: true,
+  imports: [CommonModule, NzIconModule],
   selector: 'app-upload',
   templateUrl: './index.component.html',
   styleUrls: ['./index.component.scss'],
@@ -15,14 +20,14 @@ import { createFile, getCDN, imageBranch } from 'src/api'
 export class UploadComponent {
   @Output() onChange = new EventEmitter()
 
-  $t = $t
+  readonly $t = $t
   uploading: boolean = false
   // @ts-ignore
   id = `f${Date.now()}${parseInt(Math.random() * 1000000)}`
 
   constructor(private message: NzMessageService) {}
 
-  onChangeFile(e: any) {
+  onChangeFile(e: any): any {
     if (this.uploading) {
       return
     }
@@ -49,12 +54,11 @@ export class UploadComponent {
         that.uploading = true
         const iconUrl = this.result as string
         const url = iconUrl.split(',')[1]
-        // fileName 方便自动带上文件后缀
-        const fileName = file.name.replace(/\s/gi, '')
-        const path = `nav-${Date.now()}-${fileName}`
+        const mime = `.${file.name.split('.').at(-1) || 'png'}`
+        const path = `${Date.now()}${mime}`
 
-        createFile({
-          branch: imageBranch || 'image',
+        createImageFile({
+          branch: getImageRepo().branch,
           message: 'create image',
           content: url,
           isEncode: false,
@@ -62,8 +66,7 @@ export class UploadComponent {
         })
           .then((res) => {
             const params = {
-              rawPath: path,
-              cdn: res?.data?.imagePath || getCDN(path),
+              cdn: isSelfDevelop ? res?.data?.fullImagePath : getCDN(path),
             }
             that.onChange.emit(params)
             that.message.success($t('_uploadSuccess'))
