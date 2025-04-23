@@ -61,7 +61,12 @@ export default class LightComponent {
   }
 
   ngOnInit() {
-    randomBgImg()
+    // randomBgImg()
+    document.body.style.backgroundImage = 'url("assets/img/background.jpg")';
+    document.body.style.backgroundAttachment = 'fixed';/*背景图片不会随着页面的滚动而滚动。*/
+    document.body.style.backgroundRepeat = 'no-repeat';/*设置背景不重复*/
+    document.body.style.backgroundSize = 'cover';/*	此时会保持图像的纵横比并将图像缩放成将完全覆盖背景定位区域的最小大小。*/
+
   }
 
   ngOnDestroy() {
