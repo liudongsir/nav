@@ -16,6 +16,8 @@ import { isSelfDevelop } from 'src/utils/utils'
 })
 export class IconGitComponent {
   gitRepoUrl: string = config.gitRepoUrl
+  showGithub = settings.showGithub
+  gitRepoUrl: string = config.gitRepoUrl
   showGithub = !isSelfDevelop && settings().showGithub
 
   constructor() {}
